@@ -173,23 +173,26 @@ export function GeneralPage() {
 
         {platform.metadata.isTauri && (
           <SettingRow
-            title={t('settings.general.networkAccess.title')}
-            description={t('settings.general.networkAccess.description')}
-            htmlFor="allowNetworkAccess"
+            title="Server mode"
+            description="In remote mode, Voicebox will connect to the Server URL and will not start the bundled sidecar. Restart the app after changing this setting."
+            htmlFor="serverMode"
             action={
-              <Toggle
-                id="allowNetworkAccess"
-                checked={mode === 'remote'}
-                onCheckedChange={(checked: boolean) => {
-                  setMode(checked ? 'remote' : 'local');
+              <select
+                id="serverMode"
+                value={mode}
+                onChange={(event) => {
+                  const newMode = event.target.value as 'local' | 'remote';
+                  setMode(newMode);
                   toast({
-                    title: t('settings.general.networkAccess.updatedTitle'),
-                    description: checked
-                      ? t('settings.general.networkAccess.enabled')
-                      : t('settings.general.networkAccess.disabled'),
+                    title: 'Server mode updated',
+                    description: `Server mode changed to ${newMode}. Restart the app to apply.`,
                   });
                 }}
-              />
+                className="flex h-9 w-[200px] items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="local">Local bundled server</option>
+                <option value="remote">Remote / proxy server</option>
+              </select>
             }
           />
         )}
