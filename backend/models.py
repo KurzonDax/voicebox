@@ -508,6 +508,8 @@ class ModelStatus(BaseModel):
     size_mb: Optional[float] = None
     loaded: bool = False
     cuda_arch_warning: Optional[str] = None  # Set when GPU arch mismatches the CUDA binary
+    platform_compatible: bool = True  # False when requires != [] and current platform not in requires
+    requires: List[str] = []  # Hardware platform requirements (mirrors ModelConfig.requires)
 
 
 class ModelStatusListResponse(BaseModel):
