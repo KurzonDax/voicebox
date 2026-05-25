@@ -51,6 +51,8 @@ import type {
   MCPClientBindingListResponse,
   MCPClientBindingUpsert,
   AppSettings,
+  CustomModelCreate,
+  CustomModelResponse,
 } from './types';
 
 function formatErrorDetail(detail: unknown, fallback: string): string {
@@ -604,6 +606,24 @@ class ApiClient {
     return this.request<{ message: string }>('/models/download/cancel', {
       method: 'POST',
       body: JSON.stringify({ model_name: modelName } as ModelDownloadRequest),
+    });
+  }
+
+  // Custom Models
+  async listCustomModels(): Promise<CustomModelResponse[]> {
+    return this.request<CustomModelResponse[]>('/custom-models');
+  }
+
+  async addCustomModel(data: CustomModelCreate): Promise<CustomModelResponse> {
+    return this.request<CustomModelResponse>('/custom-models', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteCustomModel(modelId: string): Promise<{ message: string }> {
+    return this.request<{ message: string }>(`/custom-models/${encodeURIComponent(modelId)}`, {
+      method: 'DELETE',
     });
   }
 
