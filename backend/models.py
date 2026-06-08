@@ -530,7 +530,9 @@ class CustomModelCreate(BaseModel):
     """Request model for adding a custom HuggingFace model."""
 
     hf_repo_id: str = Field(
-        ..., min_length=3, max_length=200,
+        ...,
+        min_length=3,
+        max_length=200,
         pattern=r"^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+$",
     )
     display_name: str | None = Field(None, min_length=1, max_length=200)
