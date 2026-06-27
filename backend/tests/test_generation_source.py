@@ -17,19 +17,20 @@ import sys
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 
 # tests/ lives at backend/tests/ — make backend/ importable so we can do
 # ``from backend.models import ...`` (which keeps the package's relative
 # imports in models.py working).
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
-from backend.models import (  # noqa: E402
+from datetime import datetime
+
+from backend.models import (
     GenerationRequest,
     GenerationResponse,
     GenerationSource,
 )
-from datetime import datetime
-
 
 VALID_SOURCES = ("mcp", "rest", "manual", "import", "personality_speak")
 
@@ -50,7 +51,7 @@ def test_generation_source_literal_accepts_all_valid_values():
 
 def test_generation_source_literal_rejects_unknown_value():
     """Pydantic must reject unknown source values — closed Literal set."""
-    with pytest.raises(Exception):
+    with pytest.raises(ValidationError):
         GenerationResponse(
             id="g-1",
             profile_id="p-1",
