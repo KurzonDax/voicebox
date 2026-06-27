@@ -114,3 +114,42 @@ class TestLIKEEscaping:
         result = _run(HistoryQuery(search="path_to_file.wav"), db)
         assert result.total == 1
         assert result.items[0].id == "g3"
+
+
+# ---------------------------------------------------------------------------
+# SQL injection attempts — the search value must never reach the SQL parser
+# as raw code.  SQLAlchemy parameterises the LIKE argument, so a single
+# quote cannot break out of the string literal.
+# ---------------------------------------------------------------------------
+
+
+class TestSQLInjection:
+    """Single quotes and classic injection payloads must be treated as text."""
+
+    def test_single_quote_does_not_break_query(self, db):
+        """A lone ' must not raise and must not match rows lacking a literal '."""
+        # Add a row that contains an apostrophe so we can also prove a positive match.
+        db.add(DBGeneration(id="g6", profile_id="p1", text="it's working", status="completed"))
+        db.commit()
+
+        # Negative: no existing row contains "O'Brian" → zero results, no exception.
+        result = _run(HistoryQuery(search="O'Brian"), db)
+        assert result.total == 0
+
+    def test_single_quote_positive_match(self, db):
+        """A search containing ' must match rows whose text literally contains that '."""
+        db.add(DBGeneration(id="g6", profile_id="p1", text="it's working", status="completed"))
+        db.commit()
+
+        result = _run(HistoryQuery(search="it's"), db)
+        ids = {item.id for item in result.items}
+        assert "g6" in ids
+
+    def test_classic_injection_payload_is_inert(self, db):
+        """A textbook '; DROP TABLE-- payload must be treated as a literal search string."""
+        payload = "'; DROP TABLE generations; --"
+        result = _run(HistoryQuery(search=payload), db)
+        # No row contains that exact string → zero results.
+        assert result.total == 0
+        # The generations table must still exist (未被 dropped).
+        assert db.query(DBGeneration).count() == 5

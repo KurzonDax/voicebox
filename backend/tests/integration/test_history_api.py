@@ -130,6 +130,48 @@ class TestHistorySearch:
 
 
 # ---------------------------------------------------------------------------
+# SQL injection — single quotes must never reach the SQL parser as code.
+# SQLAlchemy parameterises the LIKE argument, so ' cannot break out.
+# ---------------------------------------------------------------------------
+
+
+class TestHistorySQLInjection:
+    """Single-quote and classic injection payloads must be inert."""
+
+    def test_single_quote_does_not_break_query(self, seeded_db):
+        """A lone ' in the search string must not raise or match unrelated rows."""
+        from backend.database import Generation as DBGeneration
+
+        seeded_db.add(DBGeneration(id="gen-6", profile_id="prof-1", text="it's working", status="completed"))
+        seeded_db.commit()
+
+        # Negative: no row contains "O'Brian" → zero results, no exception.
+        result = _list(seeded_db, search="O'Brian")
+        assert result.total == 0
+
+    def test_single_quote_positive_match(self, seeded_db):
+        """A search containing ' must match rows whose text literally contains that '."""
+        from backend.database import Generation as DBGeneration
+
+        seeded_db.add(DBGeneration(id="gen-6", profile_id="prof-1", text="it's working", status="completed"))
+        seeded_db.commit()
+
+        result = _list(seeded_db, search="it's")
+        found = _ids(result)
+        assert "gen-6" in found
+
+    def test_classic_injection_payload_is_inert(self, seeded_db):
+        """A textbook '; DROP TABLE-- payload must be treated as a literal search string."""
+        from backend.database import Generation as DBGeneration
+
+        payload = "'; DROP TABLE generations; --"
+        result = _list(seeded_db, search=payload)
+        assert result.total == 0  # no row contains that literal string
+        # The generations table must still exist (未被 dropped).
+        assert seeded_db.query(DBGeneration).count() == 5
+
+
+# ---------------------------------------------------------------------------
 # Profile-id filter
 # ---------------------------------------------------------------------------
 
