@@ -8,16 +8,16 @@ Verifies:
 5. ``create_voice_prompt_for_profile`` returns samples ordered by ``sort_order``.
 """
 
-import tempfile
 import shutil
-from pathlib import Path
+import sys
+import tempfile
 from datetime import UTC, datetime
+from pathlib import Path
 
 import pytest
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import sessionmaker
 
-import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from backend.database import Base, ProfileSample as DBProfileSample, VoiceProfile as DBVoiceProfile
