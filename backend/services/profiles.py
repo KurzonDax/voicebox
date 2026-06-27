@@ -5,7 +5,6 @@ import logging
 import shutil
 import uuid
 from datetime import UTC, datetime
-from pathlib import Path
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -235,11 +234,18 @@ async def add_profile_sample(
     dest_path = profile_dir / f"{sample_id}.wav"
     await asyncio.to_thread(save_audio, audio, str(dest_path), sr)
 
+    # Assign sort_order = max(existing) + 1 so each new sample appends at
+    # the end rather than landing at 0 (which would make all samples tie for
+    # the top position and produce non-deterministic ordering).
+    max_order = db.query(func.max(DBProfileSample.sort_order)).filter_by(profile_id=profile_id).scalar()
+    next_order = (max_order or 0) + 1
+
     db_sample = DBProfileSample(
         id=sample_id,
         profile_id=profile_id,
         audio_path=config.to_storage_path(dest_path),
         reference_text=reference_text,
+        sort_order=next_order,
     )
 
     db.add(db_sample)
@@ -571,7 +577,7 @@ async def create_voice_prompt_for_profile(
         raise ValueError(f"Engine '{engine}' does not support cloned voice profiles")
 
     # ── Cloned profiles: create from audio samples ──
-    samples = db.query(DBProfileSample).filter_by(profile_id=profile_id).all()
+    samples = db.query(DBProfileSample).filter_by(profile_id=profile_id).order_by(DBProfileSample.sort_order).all()
 
     if not samples:
         raise ValueError(f"No samples found for profile {profile_id}")

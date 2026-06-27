@@ -15,10 +15,12 @@ EXPECTED_INDEXES = [
     ("ix_generations_profile_id", "generations", "profile_id"),
     ("ix_generations_created_at", "generations", "created_at"),
     ("ix_generations_status", "generations", "status"),
+    ("ix_generations_is_favorited", "generations", "is_favorited"),
     ("ix_story_items_story_id", "story_items", "story_id"),
     ("ix_story_items_generation_id", "story_items", "generation_id"),
     ("ix_generation_versions_generation_id", "generation_versions", "generation_id"),
     ("ix_profile_samples_profile_id", "profile_samples", "profile_id"),
+    ("ix_profile_samples_sort_order", "profile_samples", "sort_order"),
     ("ix_captures_created_at", "captures", "created_at"),
     ("ix_channel_device_mappings_channel_id", "channel_device_mappings", "channel_id"),
 ]
@@ -34,7 +36,8 @@ def _create_minimal_schema(engine):
                     id TEXT PRIMARY KEY,
                     profile_id TEXT NOT NULL,
                     created_at TIMESTAMP,
-                    status TEXT DEFAULT 'completed'
+                    status TEXT DEFAULT 'completed',
+                    is_favorited BOOLEAN DEFAULT 0
                 )
                 """
             )
@@ -65,7 +68,8 @@ def _create_minimal_schema(engine):
                 """
                 CREATE TABLE profile_samples (
                     id TEXT PRIMARY KEY,
-                    profile_id TEXT NOT NULL
+                    profile_id TEXT NOT NULL,
+                    sort_order INTEGER NOT NULL DEFAULT 0
                 )
                 """
             )
@@ -155,10 +159,8 @@ def test_migrate_add_indexes_skips_missing_tables_silently():
     # Only create one table; the others are missing.
     with engine.connect() as conn:
         conn.execute(
-            text(
-                "CREATE TABLE generations (id TEXT PRIMARY KEY, profile_id TEXT, "
-                "created_at TIMESTAMP, status TEXT)"
-            )
+            text("CREATE TABLE generations (id TEXT PRIMARY KEY, profile_id TEXT, "
+                 "created_at TIMESTAMP, status TEXT, is_favorited BOOLEAN DEFAULT 0)")
         )
         conn.commit()
 
