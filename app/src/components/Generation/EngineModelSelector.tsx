@@ -1,4 +1,6 @@
 import { useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Lock } from 'lucide-react';
 import type { UseFormReturn } from 'react-hook-form';
 import { FormControl } from '@/components/ui/form';
 import {
@@ -8,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { apiClient } from '@/lib/api/client';
 import type { VoiceProfileResponse } from '@/lib/api/types';
 import { getLanguageOptionsForEngine } from '@/lib/constants/languages';
 import type { GenerationFormValues } from '@/lib/hooks/useGenerationForm';
@@ -44,6 +47,22 @@ const ENGINE_DESCRIPTIONS: Record<string, string> = {
   moss_tts_nano: '0.1B, CPU realtime, 19 langs, 48 kHz',
   minimax: 'Cloud TTS, no download needed',
 };
+
+/** Map from engine name to the model_name used by the backend status API. */
+const ENGINE_TO_MODEL_NAME: Partial<Record<string, string>> = {
+  kokoro: 'kokoro',
+  luxtts: 'luxtts',
+  chatterbox: 'chatterbox-tts',
+  chatterbox_turbo: 'chatterbox-turbo',
+};
+
+/** Derive the backend model_name string for an ENGINE_OPTIONS entry. */
+function deriveModelName(opt: (typeof ENGINE_OPTIONS)[number]): string {
+  if (opt.value.includes(':')) {
+    return opt.engine + '-tts-' + opt.value.split(':')[1];
+  }
+  return ENGINE_TO_MODEL_NAME[opt.engine] ?? '';
+}
 
 /** Engines that only support English and should force language to 'en' on select. */
 const ENGLISH_ONLY_ENGINES = new Set(['luxtts', 'chatterbox_turbo']);
@@ -132,6 +151,39 @@ export function EngineModelSelector({ form, compact, selectedProfile }: EngineMo
   const selectValue = getSelectValue(engine, modelSize);
   const availableOptions = getAvailableOptions(selectedProfile);
 
+  // Fetch model status to get platform_compatible per engine.
+  // staleTime is long — this rarely changes within a session.
+  const { data: modelStatus } = useQuery({
+    queryKey: ['modelStatus'],
+    queryFn: () => apiClient.getModelStatus(),
+    staleTime: 1000 * 60 * 5,
+  });
+
+  // Build engine -> {compatible, requires} from the model-status payload.
+  // For each model entry, find the matching ENGINE_OPTIONS entry by
+  // derived model_name (or a startsWith fallback) and record the most
+  // restrictive observed compatibility — a single incompatible variant
+  // is enough to mark the engine as locked.
+  const engineCompatibility: Record<string, { compatible: boolean; requires: string[] }> = {};
+  if (modelStatus?.models) {
+    for (const m of modelStatus.models) {
+      for (const opt of ENGINE_OPTIONS) {
+        const optModelName = deriveModelName(opt);
+        if (m.model_name !== optModelName && !m.model_name.startsWith(opt.engine.replace('_', '-'))) {
+          continue;
+        }
+        const prev = engineCompatibility[opt.engine];
+        const incompatible = !m.platform_compatible && (m.requires ?? []).length > 0;
+        if (!prev || incompatible) {
+          engineCompatibility[opt.engine] = {
+            compatible: !incompatible,
+            requires: m.requires ?? [],
+          };
+        }
+      }
+    }
+  }
+
   const currentEngineAvailable = availableOptions.some((opt) => opt.value === selectValue);
 
   useEffect(() => {
@@ -153,11 +205,37 @@ export function EngineModelSelector({ form, compact, selectedProfile }: EngineMo
         </SelectTrigger>
       </FormControl>
       <SelectContent>
-        {availableOptions.map((opt) => (
-          <SelectItem key={opt.value} value={opt.value} className={itemClass}>
-            {opt.label}
-          </SelectItem>
-        ))}
+        {availableOptions.map((opt) => {
+          const compat = engineCompatibility[opt.engine];
+          const isIncompatible = compat && !compat.compatible && compat.requires.length > 0;
+          const requiresLabel = compat?.requires.join('/') ?? '';
+
+          if (isIncompatible) {
+            return (
+              <SelectItem
+                key={opt.value}
+                value={opt.value}
+                className={`${itemClass ?? ''} opacity-50 cursor-not-allowed`}
+                disabled
+                title={`Requires ${requiresLabel} hardware`}
+              >
+                <span className="flex items-center gap-1.5">
+                  <Lock className="h-3 w-3 shrink-0" />
+                  {opt.label}
+                </span>
+              </SelectItem>
+            );
+          }
+
+          return (
+            <SelectItem key={opt.value} value={opt.value} className={itemClass}>
+              <div>
+                <div>{opt.label}</div>
+                <div className="text-xs text-muted-foreground">{ENGINE_DESCRIPTIONS[opt.engine]}</div>
+              </div>
+            </SelectItem>
+          );
+        })}
       </SelectContent>
     </Select>
   );

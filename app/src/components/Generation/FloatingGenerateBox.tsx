@@ -257,7 +257,7 @@ export function FloatingGenerateBox({
   }, [isExpanded]);
 
   async function onSubmit(data: Parameters<typeof handleSubmit>[0]) {
-    await handleSubmit(data, selectedProfileId);
+    await handleSubmit(data, selectedProfileId, selectedProfile);
   }
 
   return (
@@ -685,7 +685,7 @@ export function FloatingGenerateBox({
                   />
 
                   <FormItem className="flex-1 space-y-0">
-                    <EngineModelSelector form={form} compact />
+                    <EngineModelSelector form={form} compact selectedProfile={selectedProfile} />
                   </FormItem>
 
                   <FormItem className="flex-1 space-y-0">
