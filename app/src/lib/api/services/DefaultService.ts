@@ -12,6 +12,7 @@ import type { HistoryResponse } from '../models/HistoryResponse';
 import type { ModelDownloadRequest } from '../models/ModelDownloadRequest';
 import type { ModelStatusListResponse } from '../models/ModelStatusListResponse';
 import type { ProfileSampleResponse } from '../models/ProfileSampleResponse';
+import type { SampleReorderRequest } from '../models/SampleReorderRequest';
 import type { TranscriptionResponse } from '../models/TranscriptionResponse';
 import type { VoiceProfileCreate } from '../models/VoiceProfileCreate';
 import type { VoiceProfileResponse } from '../models/VoiceProfileResponse';
@@ -211,6 +212,32 @@ export class DefaultService {
       path: {
         sample_id: sampleId,
       },
+      errors: {
+        422: `Validation Error`,
+      },
+    });
+  }
+  /**
+   * Reorder Samples
+   * Reorder voice profile samples. Pass sample_ids in desired order.
+   * @returns any Successful Response
+   * @throws ApiError
+   */
+  public static reorderSamplesProfilesProfileIdSamplesReorderPatch({
+    profileId,
+    requestBody,
+  }: {
+    profileId: string;
+    requestBody: SampleReorderRequest;
+  }): CancelablePromise<any> {
+    return __request(OpenAPI, {
+      method: 'PATCH',
+      url: '/profiles/{profile_id}/samples/reorder',
+      path: {
+        profile_id: profileId,
+      },
+      body: requestBody,
+      mediaType: 'application/json',
       errors: {
         422: `Validation Error`,
       },

@@ -57,6 +57,7 @@ class ProfileSample(Base):
     profile_id = Column(String, ForeignKey("profiles.id"), nullable=False, index=True)
     audio_path = Column(String, nullable=False)
     reference_text = Column(Text, nullable=False)
+    sort_order = Column(Integer, nullable=False, default=0, index=True)
 
 
 class Generation(Base):
@@ -76,7 +77,7 @@ class Generation(Base):
     model_size = Column(String, nullable=True)
     status = Column(String, default="completed", index=True)
     error = Column(Text, nullable=True)
-    is_favorited = Column(Boolean, default=False)
+    is_favorited = Column(Boolean, default=False, index=True)
     # Origin of this generation — "manual" for plain /generate calls,
     # "personality_speak" for rows whose text was rewritten through the
     # profile's personality LLM before TTS. Future sources (bulk import,

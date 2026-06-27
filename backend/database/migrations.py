@@ -43,6 +43,7 @@ def run_migrations(engine) -> None:
     _migrate_generation_versions(engine, inspector, tables)
     _migrate_capture_settings(engine, inspector, tables)
     _migrate_mcp_bindings(engine, inspector, tables)
+    _migrate_profile_samples(engine, inspector, tables)
     _normalize_storage_paths(engine, tables)
     _migrate_add_indexes(engine, tables)
 
@@ -300,6 +301,19 @@ def _supports_drop_column(engine) -> bool:
     return tuple(int(p) for p in sqlite3.sqlite_version.split(".")[:3]) >= (3, 35, 0)
 
 
+def _migrate_profile_samples(engine, inspector, tables: set[str]) -> None:
+    """Add ``sort_order`` column to ``profile_samples`` if missing.
+
+    Existing rows default to 0; the application layer assigns increasing
+    values to new samples so ordering is deterministic.
+    """
+    if "profile_samples" not in tables:
+        return
+    columns = _get_columns(inspector, "profile_samples")
+    if "sort_order" not in columns:
+        _add_column(engine, "profile_samples", "sort_order INTEGER NOT NULL DEFAULT 0", "sort_order")
+
+
 def _migrate_add_indexes(engine, tables: set[str]) -> None:
     """Create missing indexes on high-traffic foreign keys and sort columns.
 
@@ -314,6 +328,7 @@ def _migrate_add_indexes(engine, tables: set[str]) -> None:
         ("ix_generations_profile_id", "generations", "profile_id"),
         ("ix_generations_created_at", "generations", "created_at"),
         ("ix_generations_status", "generations", "status"),
+        ("ix_generations_is_favorited", "generations", "is_favorited"),
         # story_items — every story lookup filters by story_id; join on generation_id
         ("ix_story_items_story_id", "story_items", "story_id"),
         ("ix_story_items_generation_id", "story_items", "generation_id"),
@@ -321,6 +336,7 @@ def _migrate_add_indexes(engine, tables: set[str]) -> None:
         ("ix_generation_versions_generation_id", "generation_versions", "generation_id"),
         # profile_samples — loaded per-profile on every voice prompt build
         ("ix_profile_samples_profile_id", "profile_samples", "profile_id"),
+        ("ix_profile_samples_sort_order", "profile_samples", "sort_order"),
         # captures — ordered by date in list view
         ("ix_captures_created_at", "captures", "created_at"),
         # channel_device_mappings — looked up per channel
