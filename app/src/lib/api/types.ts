@@ -537,3 +537,7 @@ export interface MCPClientBindingUpsert {
 export interface MCPClientBindingListResponse {
   items: MCPClientBinding[];
 }
+
+export interface AppSettings {
+  use_48k_speech_tokenizer: boolean;
+}

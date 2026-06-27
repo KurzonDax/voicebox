@@ -818,3 +818,20 @@ class AvailableEffectsResponse(BaseModel):
     """Response listing all available effect types."""
 
     effects: List[AvailableEffect]
+
+
+class AppSettings(BaseModel):
+    """Application settings persisted to data/settings.json."""
+
+    use_48k_speech_tokenizer: bool = False
+
+
+class AppSettingsUpdate(BaseModel):
+    """Partial update model for application settings.
+
+    Every field is optional so PATCH requests only touch the fields
+    the client sent.  ``exclude_none=True`` on ``model_dump`` strips
+    the unset fields before merging.
+    """
+
+    use_48k_speech_tokenizer: Optional[bool] = None

@@ -31,6 +31,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -41,7 +42,13 @@ import {
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/components/ui/use-toast';
 import { apiClient } from '@/lib/api/client';
-import type { ActiveDownloadTask, HuggingFaceModelInfo, ModelStatus } from '@/lib/api/types';
+import type {
+  ActiveDownloadTask,
+  HuggingFaceModelInfo,
+  ModelStatus,
+  AppSettings,
+  HealthResponse,
+} from '@/lib/api/types';
 import { useModelDownloadToast } from '@/lib/hooks/useModelDownloadToast';
 import { usePlatform } from '@/platform/PlatformContext';
 import { useServerStore } from '@/stores/serverStore';
@@ -152,6 +159,37 @@ export function ModelManagement() {
   // Modal state
   const [selectedModel, setSelectedModel] = useState<ModelStatus | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+
+  // App settings and health queries for the 48kHz tokenizer toggle
+  const { data: appSettings } = useQuery<AppSettings>({
+    queryKey: ['appSettings'],
+    queryFn: () => apiClient.getAppSettings(),
+  });
+
+  const { data: health } = useQuery<HealthResponse>({
+    queryKey: ['health'],
+    queryFn: () => apiClient.getHealth(),
+  });
+
+  const settingsMutation = useMutation({
+    mutationFn: (data: { use_48k_speech_tokenizer: boolean }) => apiClient.updateAppSettings(data),
+    onSuccess: (updated: AppSettings) => {
+      queryClient.setQueryData(['appSettings'], updated);
+      toast({
+        title: 'Setting updated',
+        description: updated.use_48k_speech_tokenizer
+          ? '48kHz speech tokenizer enabled. It will apply from your next generation.'
+          : '48kHz speech tokenizer disabled. It will apply from your next generation.',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Failed to update setting',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
 
   const { data: modelStatus, isLoading } = useQuery({
     queryKey: ['modelStatus'],
@@ -674,6 +712,34 @@ export function ModelManagement() {
           )}
         </div>
       ) : null}
+
+      {health?.backend_type === 'pytorch' && (
+        <div className="mt-6 pt-6 border-t">
+          <h3 className="text-sm font-semibold mb-3 text-muted-foreground">Advanced Settings</h3>
+          <div className="flex items-start space-x-3">
+            <Checkbox
+              id="use48kTokenizer"
+              checked={appSettings?.use_48k_speech_tokenizer ?? false}
+              onCheckedChange={(checked: boolean) => {
+                settingsMutation.mutate({ use_48k_speech_tokenizer: checked });
+              }}
+              disabled={settingsMutation.isPending}
+            />
+            <div className="space-y-1">
+              <label
+                htmlFor="use48kTokenizer"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+              >
+                Use 48kHz speech tokenizer (experimental)
+              </label>
+              <p className="text-sm text-muted-foreground">
+                Enables a higher quality 48kHz speech tokenizer. Changes take effect from your next
+                generation.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Model Detail Modal */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>

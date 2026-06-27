@@ -5,6 +5,12 @@
 
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- **48kHz speech tokenizer opt-in setting** — UI toggle in the Models tab (Advanced Settings) to enable the higher-quality 48kHz speech tokenizer on the PyTorch backend. Disabled by default; changes take effect from the next generation. Settings are persisted via `GET /settings` and `PATCH /settings` API endpoints.
+
 ## [0.5.0] - 2026-04-22
 
 **The Capture release.** Voicebox stops being just a voice-cloning studio and becomes a full AI voice studio. Hold a key anywhere on your machine, speak, release — the transcript lands in the focused text field. Flip the primitive around and any MCP-aware agent — Claude Code, Cursor, Spacebot — speaks back through an on-screen pill in one of your cloned voices. A local LLM sits between the two, so transcripts come out clean and voice profiles can carry a personality that reshapes what the agent says before it gets spoken.

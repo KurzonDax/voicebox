@@ -1,13 +1,37 @@
-"""User settings endpoints — capture/refine and generation defaults."""
+"""User settings endpoints — capture/refine, generation defaults, and app settings."""
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from .. import models
+from .. import config, models
 from ..database import get_db
 from ..services import settings as settings_service
 
 router = APIRouter(prefix="/settings", tags=["settings"])
+
+
+@router.get("", response_model=models.AppSettings)
+async def get_app_settings():
+    """Return current application settings (persisted in data/settings.json)."""
+    return models.AppSettings(**config.load_app_settings())
+
+
+@router.patch("", response_model=models.AppSettings)
+async def update_app_settings(update: models.AppSettingsUpdate):
+    """Partially update application settings.
+
+    Only provided fields are written; the rest stay at their current value.
+    The merged result is validated, persisted, and returned.
+    """
+    data = config.load_app_settings()
+    if data == {} and config.get_settings_path().exists():
+        raise HTTPException(status_code=500, detail="Failed to read settings")
+
+    patch = update.model_dump(exclude_none=True)
+    data.update(patch)
+    validated = models.AppSettings(**data)
+    config.save_app_settings(validated.model_dump())
+    return validated
 
 
 @router.get("/captures", response_model=models.CaptureSettingsResponse)
