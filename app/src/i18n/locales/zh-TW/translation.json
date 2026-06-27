@@ -718,6 +718,14 @@
       "tooltipInactive": "以角色發話",
       "ariaLabelActive": "以角色發話中",
       "ariaLabelInactive": "以角色發話"
+    },
+    "chatterbox": {
+      "exaggerationLabel": "情感強度",
+      "exaggerationAria": "情感誇張強度",
+      "exaggerationDescription": "控制情感表現力（0 = 平淡，1 = 豐富）",
+      "cfgWeightLabel": "CFG 權重",
+      "cfgWeightAria": "無分類器引導權重",
+      "cfgWeightDescription": "控制語音一致性（0 = 隨意/多變，1 = 緊湊/一致）"
     }
   },
   "main": {
