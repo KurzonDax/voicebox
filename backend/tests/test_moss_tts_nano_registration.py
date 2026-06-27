@@ -13,7 +13,7 @@ Covers:
 - get_tts_backend_for_engine returns a MOSSTTSNanoBackend instance for the
   engine string (without instantiating the real ML model).
 - _get_non_qwen_tts_configs exposes a moss-tts-nano ModelConfig with the
-  full set of 20 supported languages.
+  full set of 19 supported languages.
 """
 
 from __future__ import annotations
@@ -162,8 +162,8 @@ class TestModelConfig:
         assert config.hf_repo_id == MOSS_TTS_NANO_HF_REPO
         assert config.size_mb > 0
 
-    def test_config_exposes_all_20_languages(self):
-        """PR #507 advertises 20-language support; the ModelConfig must include all of them."""
+    def test_config_exposes_all_19_languages(self):
+        """PR #507 advertises 19-language support; the ModelConfig must include all of them."""
         configs = _get_non_qwen_tts_configs()
         moss_configs = [c for c in configs if c.engine == "moss_tts_nano"]
         assert len(moss_configs) == 1
@@ -174,7 +174,6 @@ class TestModelConfig:
             "hu", "ko", "ru", "fa", "ar", "pl", "pt",
             "cs", "da", "sv", "el", "tr",
         }
-        # 19 codes from PR body + extras verified by inspecting backend/models.py
-        # language pattern; backend only mentions 19 distinct codes plus the
-        # 3 new hu/fa/cs additions. Accept any superset containing the expected set.
+        # 19 codes from PR #507's ModelConfig in backend/backends/__init__.py.
+        # Accept any superset (e.g. if a future commit adds more languages).
         assert expected.issubset(langs), f"missing: {expected - langs}"
