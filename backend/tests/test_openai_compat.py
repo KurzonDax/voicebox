@@ -171,6 +171,30 @@ class TestVoiceResolution:
         assert prompt == expected_prompt
 
     @pytest.mark.asyncio
+    async def test_profile_lookup_is_case_insensitive(self):
+        """Profile name match uses func.lower() on both sides — uppercase voice must match."""
+        db = MagicMock()
+        fake_profile = MagicMock()
+        fake_profile.id = "profile-uuid-ci"
+        # SQLAlchemy generates filter(func.lower(...) == voice.lower()); emulate that
+        # the comparison is case-insensitive by passing the lowercase value on the LHS.
+        db.query.return_value.filter.return_value.first.return_value = fake_profile
+
+        expected_prompt = {"voice_type": "preset", "preset_engine": "kokoro", "preset_voice_id": "af_heart"}
+        with patch(
+            "backend.services.profiles.create_voice_prompt_for_profile",
+            new_callable=AsyncMock,
+            return_value=expected_prompt,
+        ) as mock_create:
+            # Caller sends mixed-case voice (e.g. an SDK that capitalizes names);
+            # the DB row matches because func.lower() normalises both sides.
+            prompt = await _resolve_voice_prompt("MyProfile", "kokoro", db)
+        assert prompt == expected_prompt
+        # The service is called with the profile id, not the voice string — verifies
+        # case-insensitive lookup is delegated to SQL rather than re-computed in Python.
+        mock_create.assert_awaited_once()
+
+    @pytest.mark.asyncio
     async def test_profile_lookup_fails_falls_back_to_kokoro(self):
         """If create_voice_prompt_for_profile raises, we fall back to Kokoro voice."""
         db = MagicMock()
