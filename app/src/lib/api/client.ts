@@ -50,6 +50,7 @@ import type {
   MCPClientBinding,
   MCPClientBindingListResponse,
   MCPClientBindingUpsert,
+  AppSettings,
 } from './types';
 
 function formatErrorDetail(detail: unknown, fallback: string): string {
@@ -514,6 +515,18 @@ class ApiClient {
     return this.request<GenerationSettings>('/settings/generation', {
       method: 'PUT',
       body: JSON.stringify(patch),
+    });
+  }
+
+  // App Settings (48kHz tokenizer, etc.)
+  async getAppSettings(): Promise<AppSettings> {
+    return this.request<AppSettings>('/settings');
+  }
+
+  async updateAppSettings(data: Partial<AppSettings>): Promise<AppSettings> {
+    return this.request<AppSettings>('/settings', {
+      method: 'PATCH',
+      body: JSON.stringify(data),
     });
   }
 

@@ -4,6 +4,7 @@ Configuration module for voicebox backend.
 Handles data directory configuration for production bundling.
 """
 
+import json
 import logging
 import os
 from pathlib import Path
@@ -138,3 +139,48 @@ def get_models_dir() -> Path:
     path = _data_dir / "models"
     path.mkdir(parents=True, exist_ok=True)
     return path
+
+
+def get_settings_path() -> Path:
+    """Get app settings file path."""
+    return _data_dir / "settings.json"
+
+
+def load_app_settings() -> dict:
+    """Load app settings from JSON file. Returns empty dict if file not found."""
+    path = get_settings_path()
+    if path.exists():
+        try:
+            return json.loads(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError) as exc:
+            logger.warning("Failed to load settings from %s: %s", path, exc)
+            return {}
+    return {}
+
+
+def save_app_settings(data: dict) -> None:
+    """Save app settings to JSON file atomically.
+
+    Writes to a temp file first, then renames — avoids corruption
+    if the process is killed mid-write.
+    """
+    import tempfile
+
+    path = get_settings_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Atomic write: temp file in same dir, fsync, then rename
+    fd, tmp_path = tempfile.mkstemp(dir=path.parent, suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp_path, path)
+    except Exception:
+        # Clean up temp file on failure
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
+        raise
