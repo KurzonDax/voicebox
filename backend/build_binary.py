@@ -6,13 +6,14 @@ Usage:
     python build_binary.py --cuda    # Build CUDA-enabled server binary
 """
 
-import PyInstaller.__main__
 import argparse
 import logging
 import os
 import platform
 import sys
 from pathlib import Path
+
+import PyInstaller.__main__
 
 logger = logging.getLogger(__name__)
 
@@ -68,6 +69,11 @@ def build_server(cuda=False):
             # PyInstaller. See pyi_rth_torch_compiler_disable.py.
             "--runtime-hook",
             "pyi_rth_torch_compiler_disable.py",
+            # Patch torch._torch_docs add_docstr to tolerate TypeError on
+            # Python 3.12 where C-level function types reject __doc__
+            # assignment. See pyi_rth_torch_docs_patch.py.
+            "--runtime-hook",
+            "pyi_rth_torch_docs_patch.py",
             # Per-module collection overrides (e.g. forcing scipy.stats._distn_infrastructure
             # to bundle .py source alongside .pyc so the runtime hook can source-patch it).
             "--additional-hooks-dir",
