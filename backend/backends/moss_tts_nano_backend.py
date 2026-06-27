@@ -30,7 +30,6 @@ from typing import Optional
 
 import numpy as np
 
-from . import TTSBackend
 from .base import (
     is_model_cached,
     get_torch_device,
@@ -246,7 +245,6 @@ class MOSSTTSNanoBackend:
             """
             with self._idle:
                 service = self._service
-                device = self._device
                 if service is None or self._unloading:
                     raise RuntimeError("MOSS-TTS-Nano service is not loaded")
                 self._active_generations += 1
