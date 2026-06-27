@@ -718,6 +718,14 @@
       "tooltipInactive": "以人物设定朗读",
       "ariaLabelActive": "正以人物设定朗读",
       "ariaLabelInactive": "以人物设定朗读"
+    },
+    "chatterbox": {
+      "exaggerationLabel": "情感强度",
+      "exaggerationAria": "情感夸张强度",
+      "exaggerationDescription": "控制情感表现力（0 = 平淡，1 = 丰富）",
+      "cfgWeightLabel": "CFG 权重",
+      "cfgWeightAria": "无分类器引导权重",
+      "cfgWeightDescription": "控制语音一致性（0 = 随意/多变，1 = 紧凑/一致）"
     }
   },
   "main": {

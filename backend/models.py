@@ -90,6 +90,12 @@ class GenerationRequest(BaseModel):
         default=False,
         description="When true and the profile has a personality prompt, the input text is rewritten in-character before TTS.",
     )
+    exaggeration: Optional[float] = Field(
+        None, ge=0.0, le=1.0, description="Chatterbox only: emotion exaggeration intensity (0=flat, 1=expressive). Falls back to per-language default when None."
+    )
+    cfg_weight: Optional[float] = Field(
+        None, ge=0.0, le=1.0, description="Chatterbox only: classifier-free guidance weight controlling speech consistency (0=loose, 1=tight). Falls back to per-language default when None."
+    )
     max_chunk_chars: int = Field(
         default=800, ge=100, le=5000, description="Max characters per chunk for long text splitting"
     )

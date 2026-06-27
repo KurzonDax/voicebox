@@ -5,7 +5,15 @@ import { Dices, Loader2, SlidersHorizontal, Sparkles, Wand2 } from 'lucide-react
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import {
   Select,
   SelectContent,
@@ -13,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Slider } from '@/components/ui/slider';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { apiClient } from '@/lib/api/client';
@@ -418,13 +427,19 @@ export function FloatingGenerateBox({
                                         ? 'bg-accent text-accent-foreground border border-accent hover:bg-accent/90'
                                         : 'bg-card border border-border hover:bg-background/50',
                                     )}
-                                    aria-label={active ? t('generation.persona.ariaLabelActive') : t('generation.persona.ariaLabelInactive')}
+                                    aria-label={
+                                      active
+                                        ? t('generation.persona.ariaLabelActive')
+                                        : t('generation.persona.ariaLabelInactive')
+                                    }
                                     aria-pressed={active}
                                   >
                                     <Wand2 className="h-4 w-4" />
                                   </Button>
                                   <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 whitespace-nowrap rounded-md bg-popover px-3 py-1.5 text-xs text-popover-foreground border border-border opacity-0 transition-opacity group-hover:opacity-100 z-[9999]">
-                                    {active ? t('generation.persona.tooltipActive') : t('generation.persona.tooltipInactive')}
+                                    {active
+                                      ? t('generation.persona.tooltipActive')
+                                      : t('generation.persona.tooltipInactive')}
                                   </span>
                                 </div>
                               </FormControl>
@@ -537,6 +552,80 @@ export function FloatingGenerateBox({
               )}
             </AnimatePresence>
 
+            {/* Chatterbox parameter sliders — exaggeration and CFG weight */}
+            <AnimatePresence>
+              {isExpanded && form.watch('engine') === 'chatterbox' && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2, ease: 'easeOut' }}
+                  className="overflow-hidden"
+                >
+                  <div className="space-y-4 mt-2 px-1">
+                    <FormField
+                      control={form.control}
+                      name="exaggeration"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="flex justify-between items-center">
+                            <FormLabel className="text-xs text-muted-foreground">
+                              {t('generation.chatterbox.exaggerationLabel')}
+                            </FormLabel>
+                            <span className="text-xs text-muted-foreground tabular-nums">
+                              {(field.value ?? 0.5).toFixed(2)}
+                            </span>
+                          </div>
+                          <FormControl>
+                            <Slider
+                              value={[field.value ?? 0.5]}
+                              onValueChange={([v]) => field.onChange(v)}
+                              min={0}
+                              max={1}
+                              step={0.05}
+                              aria-label={t('generation.chatterbox.exaggerationAria')}
+                            />
+                          </FormControl>
+                          <FormDescription className="text-xs">
+                            {t('generation.chatterbox.exaggerationDescription')}
+                          </FormDescription>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="cfg_weight"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="flex justify-between items-center">
+                            <FormLabel className="text-xs text-muted-foreground">
+                              {t('generation.chatterbox.cfgWeightLabel')}
+                            </FormLabel>
+                            <span className="text-xs text-muted-foreground tabular-nums">
+                              {(field.value ?? 0.5).toFixed(2)}
+                            </span>
+                          </div>
+                          <FormControl>
+                            <Slider
+                              value={[field.value ?? 0.5]}
+                              onValueChange={([v]) => field.onChange(v)}
+                              min={0}
+                              max={1}
+                              step={0.05}
+                              aria-label={t('generation.chatterbox.cfgWeightAria')}
+                            />
+                          </FormControl>
+                          <FormDescription className="text-xs">
+                            {t('generation.chatterbox.cfgWeightDescription')}
+                          </FormDescription>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             <AnimatePresence>
               <motion.div
                 initial={{ height: 0, opacity: 0 }}
@@ -565,7 +654,6 @@ export function FloatingGenerateBox({
                       </Select>
                     </div>
                   )}
-
 
                   <FormField
                     control={form.control}

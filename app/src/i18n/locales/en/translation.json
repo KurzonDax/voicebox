@@ -718,6 +718,14 @@
       "tooltipInactive": "Speak in character",
       "ariaLabelActive": "Speaking in character",
       "ariaLabelInactive": "Speak in character"
+    },
+    "chatterbox": {
+      "exaggerationLabel": "Exaggeration",
+      "exaggerationAria": "Emotion exaggeration intensity",
+      "exaggerationDescription": "Controls emotional expressiveness (0 = flat, 1 = highly expressive)",
+      "cfgWeightLabel": "CFG Weight",
+      "cfgWeightAria": "Classifier-free guidance weight",
+      "cfgWeightDescription": "Controls speech consistency (0 = loose/varied, 1 = tight/consistent)"
     }
   },
   "main": {

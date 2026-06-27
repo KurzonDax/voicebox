@@ -718,6 +718,14 @@
       "tooltipInactive": "キャラクターとして発話",
       "ariaLabelActive": "キャラクターとして発話中",
       "ariaLabelInactive": "キャラクターとして発話"
+    },
+    "chatterbox": {
+      "exaggerationLabel": "感情の強さ",
+      "exaggerationAria": "感情の誇張度",
+      "exaggerationDescription": "感情の表現力を制御（0 = 平淡、1 = 豊か）",
+      "cfgWeightLabel": "CFG ウェイト",
+      "cfgWeightAria": "分類器フリー誘導ウェイト",
+      "cfgWeightDescription": "音声の一貫性を制御（0 = 緩い/変化あり、1 = 厳密/一貫）"
     }
   },
   "main": {
