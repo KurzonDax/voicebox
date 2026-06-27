@@ -30,6 +30,7 @@ const generationSchema = z.object({
       'tada',
       'kokoro',
       'moss_tts_nano',
+      'minimax',
     ])
     .optional(),
   personality: z.boolean().optional(),
@@ -99,6 +100,7 @@ export function useGenerationForm(options: UseGenerationFormOptions = {}) {
         chatterbox_turbo: { model: 'chatterbox-turbo', display: 'Chatterbox Turbo' },
         kokoro: { model: 'kokoro', display: 'Kokoro 82M' },
         moss_tts_nano: { model: 'moss-tts-nano', display: 'MOSS-TTS-Nano' },
+        minimax: { model: 'minimax-cloud-tts', display: 'MiniMax Cloud TTS' },
       };
 
       const resolveNames = (eng: string): EngineNames => {

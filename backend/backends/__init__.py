@@ -218,6 +218,7 @@ TTS_ENGINES = {
     "tada": "TADA",
     "kokoro": "Kokoro",
     "moss_tts_nano": "MOSS-TTS-Nano",
+    "minimax": "MiniMax Cloud TTS",
 }
 
 LLM_ENGINES = {
@@ -762,6 +763,10 @@ def get_tts_backend_for_engine(engine: str) -> TTSBackend:
             from .moss_tts_nano_backend import MOSSTTSNanoBackend
 
             backend = MOSSTTSNanoBackend()
+        elif engine == "minimax":
+            from .minimax_backend import MiniMaxTTSBackend
+
+            backend = MiniMaxTTSBackend()
         else:
             raise ValueError(f"Unknown TTS engine: {engine}. Supported: {list(TTS_ENGINES.keys())}")
 

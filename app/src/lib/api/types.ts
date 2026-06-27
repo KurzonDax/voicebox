@@ -79,7 +79,8 @@ export interface GenerationRequest {
     | 'chatterbox_turbo'
     | 'tada'
     | 'kokoro'
-    | 'moss_tts_nano';
+    | 'moss_tts_nano'
+    | 'minimax';
   instruct?: string;
   /** When true and the profile has a personality prompt, input text is rewritten in-character before TTS. */
   personality?: boolean;

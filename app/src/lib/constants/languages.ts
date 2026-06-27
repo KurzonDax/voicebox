@@ -94,6 +94,7 @@ export const ENGINE_LANGUAGES: Record<string, readonly LanguageCode[]> = {
     'el',
     'tr',
   ],
+  minimax: ['en', 'zh', 'ja', 'ko', 'de', 'fr', 'ru', 'pt', 'es', 'it'],
 } as const;
 
 /** Helper: get language options for a given engine. */

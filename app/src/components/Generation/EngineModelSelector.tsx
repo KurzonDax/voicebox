@@ -30,6 +30,7 @@ const ENGINE_OPTIONS = [
   { value: 'tada:3B', label: 'TADA 3B Multilingual', engine: 'tada' },
   { value: 'kokoro', label: 'Kokoro 82M', engine: 'kokoro' },
   { value: 'moss_tts_nano', label: 'MOSS-TTS-Nano', engine: 'moss_tts_nano' },
+  { value: 'minimax', label: 'MiniMax Cloud TTS', engine: 'minimax' },
 ] as const;
 
 const ENGINE_DESCRIPTIONS: Record<string, string> = {
@@ -41,6 +42,7 @@ const ENGINE_DESCRIPTIONS: Record<string, string> = {
   tada: 'HumeAI, 700s+ coherent audio',
   kokoro: '82M params, CPU realtime, 8 langs',
   moss_tts_nano: '0.1B, CPU realtime, 19 langs, 48 kHz',
+  minimax: 'Cloud TTS, no download needed',
 };
 
 /** Engines that only support English and should force language to 'en' on select. */
