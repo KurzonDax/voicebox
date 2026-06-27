@@ -11,6 +11,7 @@ import json
 import shutil
 import subprocess
 from pathlib import Path
+from unittest import mock
 
 import pytest
 
@@ -20,6 +21,7 @@ from backend.services.stories import (
     _derive_chapters_auto,
     _escape_ffmetadata,
     _ffmpeg_encode,
+    _make_tempfile,
     _write_ffmetadata,
 )
 
@@ -168,3 +170,80 @@ class TestFFmpegEncodeIntegration:
         titles = [ch.get("tags", {}).get("title", "") for ch in probe_chapters]
         assert "Opening" in titles
         assert "Closing" in titles
+
+
+class TestMakeTempfile:
+    def test_returns_writable_path_with_correct_suffix(self, tmp_path: Path):
+        path = _make_tempfile(suffix=".wav")
+        try:
+            assert path.suffix == ".wav"
+            # File must be writable (descriptor was closed, so re-open in write mode).
+            with path.open("wb") as f:
+                f.write(b"x")
+            assert path.read_bytes() == b"x"
+        finally:
+            path.unlink(missing_ok=True)
+
+
+class TestFFmpegEncodeErrors:
+    """Branch coverage for _ffmpeg_encode's error paths and the mp3 path."""
+
+    def test_missing_ffmpeg_raises_runtime_error(self, tmp_path: Path):
+        with (
+            mock.patch("backend.services.stories.shutil.which", return_value=None),
+            pytest.raises(RuntimeError, match="ffmpeg is required"),
+        ):
+            _ffmpeg_encode(tmp_path / "in.wav", tmp_path / "out.m4b", fmt="m4b", chapters=None)
+
+    def test_unsupported_format_raises_value_error(self, tmp_path: Path):
+        with (
+            mock.patch("backend.services.stories.shutil.which", return_value="/usr/bin/ffmpeg"),
+            pytest.raises(ValueError, match="Unsupported export format"),
+        ):
+            _ffmpeg_encode(tmp_path / "in.wav", tmp_path / "out.flac", fmt="flac", chapters=None)
+
+    def test_non_zero_returncode_raises_runtime_error(self, tmp_path: Path):
+        wav = tmp_path / "in.wav"
+        wav.write_bytes(b"RIFF")
+        out = tmp_path / "out.m4b"
+        fake = mock.Mock(returncode=1, stderr=b"some ffmpeg error\n")
+        with (
+            mock.patch("backend.services.stories.shutil.which", return_value="/usr/bin/ffmpeg"),
+            mock.patch("backend.services.stories.subprocess.run", return_value=fake) as run_mock,
+            pytest.raises(RuntimeError, match="ffmpeg exited 1"),
+        ):
+            _ffmpeg_encode(wav, out, fmt="m4b", chapters=None)
+        run_mock.assert_called_once()
+        cmd = run_mock.call_args.args[0]
+        # Confirm the mp4/aac/ipod args for m4b made it into the command.
+        assert "ipod" in cmd
+        assert "aac" in cmd
+
+    def test_timeout_expired_raises_runtime_error(self, tmp_path: Path):
+        wav = tmp_path / "in.wav"
+        wav.write_bytes(b"RIFF")
+        out = tmp_path / "out.m4b"
+        with (
+            mock.patch("backend.services.stories.shutil.which", return_value="/usr/bin/ffmpeg"),
+            mock.patch(
+                "backend.services.stories.subprocess.run",
+                side_effect=subprocess.TimeoutExpired(cmd=["ffmpeg"], timeout=600),
+            ),
+            pytest.raises(RuntimeError, match="ffmpeg timed out"),
+        ):
+            _ffmpeg_encode(wav, out, fmt="m4b", chapters=None)
+
+    def test_mp3_path_uses_lame_encoder(self, tmp_path: Path):
+        wav = tmp_path / "in.wav"
+        wav.write_bytes(b"RIFF")
+        out = tmp_path / "out.mp3"
+        fake = mock.Mock(returncode=0, stderr=b"")
+        with (
+            mock.patch("backend.services.stories.shutil.which", return_value="/usr/bin/ffmpeg"),
+            mock.patch("backend.services.stories.subprocess.run", return_value=fake) as run_mock,
+        ):
+            _ffmpeg_encode(wav, out, fmt="mp3", chapters=None)
+        cmd = run_mock.call_args.args[0]
+        assert "libmp3lame" in cmd
+        assert "mp3" in cmd
+        assert str(out) in cmd
