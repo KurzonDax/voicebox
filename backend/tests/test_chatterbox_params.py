@@ -13,6 +13,7 @@ import asyncio
 import inspect
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import numpy as np
 import pytest
 
 from backend.models import GenerationRequest
@@ -299,3 +300,119 @@ class TestRunGenerationGating:
 
         assert "exaggeration" not in captured_kwargs
         assert "cfg_weight" not in captured_kwargs
+
+
+# ── ChatterboxTTSBackend.generate() ternary fallback ─────────────────
+
+
+class TestChatterboxBackendFallback:
+    """ChatterboxTTSBackend.generate() must pass through explicit
+    exaggeration/cfg_weight when provided, and fall back to the per-language
+    defaults (or global defaults for unknown languages) when None.
+
+    These tests mock the underlying `model.generate` call so no real model is
+    loaded — only the new ternary fallback logic at the call site is exercised.
+    """
+
+    @pytest.mark.asyncio
+    async def test_explicit_params_passed_through(self):
+        """When exaggeration/cfg_weight are provided, they must reach model.generate."""
+        from backend.backends.chatterbox_backend import ChatterboxTTSBackend
+
+        backend = ChatterboxTTSBackend()
+        # model.generate is called inside asyncio.to_thread; we replace the
+        # mock AFTER to_thread calls it, so the captured call_kwargs reflect
+        # what the call site actually sent.
+        fake_audio = np.zeros(8, dtype=np.float32)
+        backend.model = MagicMock()
+        backend.model.generate = MagicMock(return_value=fake_audio)
+
+        async def fake_to_thread(func, *args, **kwargs):
+            return func(*args, **kwargs)
+
+        with patch(
+            "backend.backends.chatterbox_backend.asyncio.to_thread",
+            side_effect=fake_to_thread,
+        ):
+            with patch.object(backend, "load_model", new=AsyncMock()):
+                await backend.generate(
+                    text="hello",
+                    voice_prompt={"ref_audio": None},
+                    language="en",
+                    exaggeration=0.42,
+                    cfg_weight=0.73,
+                )
+
+        call_kwargs = backend.model.generate.call_args.kwargs
+        assert call_kwargs["exaggeration"] == 0.42
+        assert call_kwargs["cfg_weight"] == 0.73
+
+    @pytest.mark.asyncio
+    async def test_none_params_fall_back_to_global_defaults(self):
+        """When None, exaggeration/cfg_weight must be replaced by the global
+        defaults for languages without a per-language entry (e.g. 'fr')."""
+        from backend.backends.chatterbox_backend import ChatterboxTTSBackend
+
+        backend = ChatterboxTTSBackend()
+        fake_audio = np.zeros(8, dtype=np.float32)
+        backend.model = MagicMock()
+        backend.model.generate = MagicMock(return_value=fake_audio)
+
+        async def fake_to_thread(func, *args, **kwargs):
+            return func(*args, **kwargs)
+
+        with patch(
+            "backend.backends.chatterbox_backend.asyncio.to_thread",
+            side_effect=fake_to_thread,
+        ):
+            with patch.object(backend, "load_model", new=AsyncMock()):
+                # 'fr' is NOT in _LANG_DEFAULTS → falls back to _GLOBAL_DEFAULTS.
+                await backend.generate(
+                    text="bonjour",
+                    voice_prompt={"ref_audio": None},
+                    language="fr",
+                    exaggeration=None,
+                    cfg_weight=None,
+                )
+
+        call_kwargs = backend.model.generate.call_args.kwargs
+        # The fallback path must NOT pass None through to the model.
+        assert call_kwargs["exaggeration"] is not None
+        assert call_kwargs["cfg_weight"] is not None
+        # Global defaults (from _GLOBAL_DEFAULTS).
+        assert call_kwargs["exaggeration"] == ChatterboxTTSBackend._GLOBAL_DEFAULTS["exaggeration"]
+        assert call_kwargs["cfg_weight"] == ChatterboxTTSBackend._GLOBAL_DEFAULTS["cfg_weight"]
+
+    @pytest.mark.asyncio
+    async def test_none_params_fall_back_to_hebrew_lang_defaults(self):
+        """When None and language has its own defaults ('he'), those must win."""
+        from backend.backends.chatterbox_backend import ChatterboxTTSBackend
+
+        backend = ChatterboxTTSBackend()
+        fake_audio = np.zeros(8, dtype=np.float32)
+        backend.model = MagicMock()
+        backend.model.generate = MagicMock(return_value=fake_audio)
+
+        async def fake_to_thread(func, *args, **kwargs):
+            return func(*args, **kwargs)
+
+        with patch(
+            "backend.backends.chatterbox_backend.asyncio.to_thread",
+            side_effect=fake_to_thread,
+        ):
+            with patch.object(backend, "load_model", new=AsyncMock()):
+                # 'he' HAS a _LANG_DEFAULTS entry (0.4 / 0.7).
+                await backend.generate(
+                    text="שלום",
+                    voice_prompt={"ref_audio": None},
+                    language="he",
+                    exaggeration=None,
+                    cfg_weight=None,
+                )
+
+        call_kwargs = backend.model.generate.call_args.kwargs
+        # Hebrew-specific defaults must win over the global defaults.
+        assert call_kwargs["exaggeration"] == ChatterboxTTSBackend._LANG_DEFAULTS["he"]["exaggeration"]
+        assert call_kwargs["cfg_weight"] == ChatterboxTTSBackend._LANG_DEFAULTS["he"]["cfg_weight"]
+        # Sanity: the Hebrew defaults are intentionally different from globals.
+        assert call_kwargs["exaggeration"] != ChatterboxTTSBackend._GLOBAL_DEFAULTS["exaggeration"]
