@@ -7,6 +7,7 @@ under a shutil.which gate so the suite stays green on CI runners without ffmpeg.
 
 from __future__ import annotations
 
+import json
 import shutil
 import subprocess
 from pathlib import Path
@@ -153,15 +154,17 @@ class TestFFmpegEncodeIntegration:
                 "error",
                 "-show_chapters",
                 "-of",
-                "default=noprint_wrappers=1",
+                "json",
                 str(out_path),
             ],
             capture_output=True,
             check=True,
             text=True,
         )
-        chunks = probe.stdout.split("[CHAPTER]")
-        # ffprobe prints one [CHAPTER] block per chapter; expect two.
-        assert sum(1 for c in chunks if c.strip()) == 2
-        assert "Opening" in probe.stdout
-        assert "Closing" in probe.stdout
+        chapters_json = json.loads(probe.stdout)
+        probe_chapters = chapters_json.get("chapters", [])
+        # ffprobe lists one chapter per FFMETADATA1 [CHAPTER] block.
+        assert len(probe_chapters) == 2
+        titles = [ch.get("tags", {}).get("title", "") for ch in probe_chapters]
+        assert "Opening" in titles
+        assert "Closing" in titles
