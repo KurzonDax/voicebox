@@ -195,6 +195,54 @@ class TestMiniMaxGenerate:
         payload = json.loads(request.data.decode("utf-8"))
         assert payload["voice_setting"]["voice_id"] == "English_Graceful_Lady"
 
+    @patch.dict(os.environ, {"MINIMAX_API_KEY": "test-key"})
+    @patch("urllib.request.urlopen")
+    def test_generate_empty_audio_raises(self, mock_urlopen):
+        mock_resp = MagicMock()
+        mock_resp.read.return_value = json.dumps(
+            {
+                "base_resp": {"status_code": 0, "status_msg": "success"},
+                "data": {"audio": ""},
+            }
+        ).encode("utf-8")
+        mock_resp.__enter__ = lambda s: s
+        mock_resp.__exit__ = MagicMock(return_value=False)
+        mock_urlopen.return_value = mock_resp
+
+        backend = _make_backend()
+        with pytest.raises(RuntimeError, match="empty audio"):
+            _run(backend.generate("test", {"preset_voice_id": "English_Graceful_Lady"}))
+
+    @patch.dict(os.environ, {"MINIMAX_API_KEY": "test-key"})
+    @patch("urllib.request.urlopen")
+    def test_generate_http_error_wraps_runtime_error(self, mock_urlopen):
+        import urllib.error
+        from email.message import Message
+
+        hdrs = Message()
+        hdrs["Content-Type"] = "application/json"
+        mock_urlopen.side_effect = urllib.error.HTTPError(
+            url="https://api.minimax.io/v1/t2a_v2",
+            code=401,
+            msg="Unauthorized",
+            hdrs=hdrs,
+            fp=MagicMock(read=lambda: b"invalid api key"),
+        )
+
+        backend = _make_backend()
+        with pytest.raises(RuntimeError, match="401"):
+            _run(backend.generate("test", {"preset_voice_id": "English_Graceful_Lady"}))
+
+    @patch.dict(os.environ, {"MINIMAX_API_KEY": "test-key"})
+    def test_load_model_idempotent_when_already_ready(self):
+        backend = _make_backend()
+        _run(backend.load_model())
+        assert backend.is_loaded()
+        original_key = backend._api_key
+        # Calling again should be a no-op (must NOT re-read env or raise)
+        _run(backend.load_model())
+        assert backend._api_key == original_key
+
 
 class TestMiniMaxEngineRegistration:
     """Tests for MiniMax engine registration in backends __init__."""
