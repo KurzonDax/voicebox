@@ -117,10 +117,13 @@ export function useGenerationForm(options: UseGenerationFormOptions = {}) {
         }
         // Qwen TTS: resolve display name including 4-bit variants
         const qwenDisplay =
-          data.modelSize === '1.7B'        ? 'Qwen TTS 1.7B'
-          : data.modelSize === '1.7B-4bit' ? 'Qwen TTS 1.7B ⚡ Fast'
-          : data.modelSize === '0.6B-4bit' ? 'Qwen TTS 0.6B ⚡ Fast'
-          : 'Qwen TTS 0.6B';
+          data.modelSize === '1.7B'
+            ? 'Qwen TTS 1.7B'
+            : data.modelSize === '1.7B-4bit'
+              ? 'Qwen TTS 1.7B ⚡ Fast'
+              : data.modelSize === '0.6B-4bit'
+                ? 'Qwen TTS 0.6B ⚡ Fast'
+                : 'Qwen TTS 0.6B';
         return {
           model: `qwen-tts-${data.modelSize}`,
           display: qwenDisplay,
