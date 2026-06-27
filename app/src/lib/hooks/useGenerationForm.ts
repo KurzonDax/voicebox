@@ -95,11 +95,11 @@ export function useGenerationForm(options: UseGenerationFormOptions = {}) {
 
       type EngineNames = { model: string; display: string };
       const engineNameMap: Partial<Record<string, EngineNames>> = {
-        luxtts:           { model: 'luxtts',          display: 'LuxTTS' },
-        chatterbox:       { model: 'chatterbox-tts',  display: 'Chatterbox TTS' },
+        luxtts: { model: 'luxtts', display: 'LuxTTS' },
+        chatterbox: { model: 'chatterbox-tts', display: 'Chatterbox TTS' },
         chatterbox_turbo: { model: 'chatterbox-turbo', display: 'Chatterbox Turbo' },
-        kokoro:           { model: 'kokoro',           display: 'Kokoro 82M' },
-        moss_tts_nano:    { model: 'moss-tts-nano',    display: 'MOSS-TTS-Nano' },
+        kokoro: { model: 'kokoro', display: 'Kokoro 82M' },
+        moss_tts_nano: { model: 'moss-tts-nano', display: 'MOSS-TTS-Nano' },
       };
 
       const resolveNames = (eng: string): EngineNames => {
@@ -107,8 +107,8 @@ export function useGenerationForm(options: UseGenerationFormOptions = {}) {
         if (fixed) return fixed;
         if (eng === 'tada') {
           return data.modelSize === '3B'
-            ? { model: 'tada-3b-ml',  display: 'TADA 3B Multilingual' }
-            : { model: 'tada-1b',     display: 'TADA 1B' };
+            ? { model: 'tada-3b-ml', display: 'TADA 3B Multilingual' }
+            : { model: 'tada-1b', display: 'TADA 1B' };
         }
         if (eng === 'qwen_custom_voice') {
           return {
