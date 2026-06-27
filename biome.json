@@ -6,7 +6,7 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["**", "!app/src/lib/api", "!node_modules", "!dist", "!target", "!.tauri"]
+    "includes": ["**", "!app/src/lib/api", "!node_modules", "!dist", "!target", "!.tauri", "!.worktrees", "!.venv", "!.repowise", "!.claude", "!data"]
   },
   "formatter": {
     "enabled": true,
