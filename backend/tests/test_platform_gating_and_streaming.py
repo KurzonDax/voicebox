@@ -22,13 +22,12 @@ import asyncio
 import struct
 import sys
 import types
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import numpy as np
 import pytest
 from fastapi import HTTPException
 from starlette.testclient import TestClient
-
 
 # ---------------------------------------------------------------------------
 # platform_detect.get_supported_platforms  (PR #657)
@@ -49,9 +48,7 @@ class FakeTorch:
         hip_version: str | None = None,
     ):
         self.cuda = types.SimpleNamespace(is_available=lambda: cuda_available)
-        self.backends = types.SimpleNamespace(
-            mps=types.SimpleNamespace(is_available=lambda: mps_available)
-        )
+        self.backends = types.SimpleNamespace(mps=types.SimpleNamespace(is_available=lambda: mps_available))
         self.xpu = types.SimpleNamespace(is_available=lambda: xpu_available)
         self.version = types.SimpleNamespace(hip=hip_version)
 
@@ -230,9 +227,7 @@ def test_is_engine_compatible_empty_requires_is_always_compatible(monkeypatch):
     """An engine with requires=[] runs everywhere, even on a CPU-only box."""
     from backend.backends import is_engine_platform_compatible
 
-    monkeypatch.setattr(
-        "backend.backends.get_supported_platforms", lambda: ["cpu"]
-    )
+    monkeypatch.setattr("backend.backends.get_supported_platforms", lambda: ["cpu"])
     # Patch the registry so we don't pull in real engine registrations.
     monkeypatch.setattr(
         "backend.backends.get_tts_model_configs",
@@ -245,9 +240,7 @@ def test_is_engine_compatible_supported_platform_match(monkeypatch):
     """requires=["cuda"] + supported includes "cuda" → True."""
     from backend.backends import is_engine_platform_compatible
 
-    monkeypatch.setattr(
-        "backend.backends.get_supported_platforms", lambda: ["cuda", "cpu"]
-    )
+    monkeypatch.setattr("backend.backends.get_supported_platforms", lambda: ["cuda", "cpu"])
     monkeypatch.setattr(
         "backend.backends.get_tts_model_configs",
         lambda: [_fake_config("voxcpm", requires=["cuda"])],
@@ -259,9 +252,7 @@ def test_is_engine_compatible_no_supported_platform(monkeypatch):
     """requires=["cuda"] on a CPU-only machine → False."""
     from backend.backends import is_engine_platform_compatible
 
-    monkeypatch.setattr(
-        "backend.backends.get_supported_platforms", lambda: ["cpu"]
-    )
+    monkeypatch.setattr("backend.backends.get_supported_platforms", lambda: ["cpu"])
     monkeypatch.setattr(
         "backend.backends.get_tts_model_configs",
         lambda: [_fake_config("voxcpm", requires=["cuda"])],
@@ -278,9 +269,7 @@ def test_is_engine_compatible_any_variant_supported(monkeypatch):
     """
     from backend.backends import is_engine_platform_compatible
 
-    monkeypatch.setattr(
-        "backend.backends.get_supported_platforms", lambda: ["mps", "cpu"]
-    )
+    monkeypatch.setattr("backend.backends.get_supported_platforms", lambda: ["mps", "cpu"])
     monkeypatch.setattr(
         "backend.backends.get_tts_model_configs",
         lambda: [
@@ -298,10 +287,8 @@ def test_is_engine_compatible_unknown_engine_returns_true(monkeypatch):
     yet."""
     from backend.backends import is_engine_platform_compatible
 
-    monkeypatch.setattr(
-        "backend.backends.get_supported_platforms", lambda: ["cpu"]
-    )
-    monkeypatch.setattr("backend.backends.get_tts_model_configs", lambda: [])
+    monkeypatch.setattr("backend.backends.get_supported_platforms", lambda: ["cpu"])
+    monkeypatch.setattr("backend.backends.get_tts_model_configs", list)
     assert is_engine_platform_compatible("brand_new_engine") is True
 
 
@@ -317,9 +304,7 @@ async def test_load_engine_model_raises_400_on_incompatible_platform(monkeypatch
     from backend import backends
 
     # Pretend we're on a CPU-only box and require CUDA.
-    monkeypatch.setattr(
-        "backend.backends.get_supported_platforms", lambda: ["cpu"]
-    )
+    monkeypatch.setattr("backend.backends.get_supported_platforms", lambda: ["cpu"])
     monkeypatch.setattr(
         "backend.backends.get_tts_model_configs",
         lambda: [_fake_config("voxcpm", requires=["cuda"])],
@@ -328,9 +313,7 @@ async def test_load_engine_model_raises_400_on_incompatible_platform(monkeypatch
     # The guard runs before any backend lookup — get_tts_backend_for_engine
     # must never be reached on incompatibility.
     called_backend_lookup = MagicMock(side_effect=AssertionError("backend lookup should not run"))
-    monkeypatch.setattr(
-        "backend.backends.get_tts_backend_for_engine", called_backend_lookup
-    )
+    monkeypatch.setattr("backend.backends.get_tts_backend_for_engine", called_backend_lookup)
 
     with pytest.raises(HTTPException) as exc_info:
         await backends.load_engine_model("voxcpm", "default")
@@ -348,9 +331,7 @@ async def test_load_engine_model_proceeds_when_compatible(monkeypatch):
     lookup runs (here mocked so we don't load a real model)."""
     from backend import backends
 
-    monkeypatch.setattr(
-        "backend.backends.get_supported_platforms", lambda: ["cuda", "cpu"]
-    )
+    monkeypatch.setattr("backend.backends.get_supported_platforms", lambda: ["cuda", "cpu"])
     monkeypatch.setattr(
         "backend.backends.get_tts_model_configs",
         lambda: [_fake_config("voxcpm", requires=["cuda"])],
@@ -361,9 +342,7 @@ async def test_load_engine_model_proceeds_when_compatible(monkeypatch):
     # (not qwen/qwen_custom_voice and not tada). Use AsyncMock so the
     # coroutine can be awaited.
     fake_backend.load_model = AsyncMock(return_value=None)
-    monkeypatch.setattr(
-        "backend.backends.get_tts_backend_for_engine", lambda e: fake_backend
-    )
+    monkeypatch.setattr("backend.backends.get_tts_backend_for_engine", lambda e: fake_backend)
 
     # Should not raise.
     await backends.load_engine_model("voxcpm", "default")
@@ -389,9 +368,7 @@ async def test_load_engine_model_no_requires_skips_guard(monkeypatch):
 
     fake_backend = MagicMock()
     fake_backend.load_model_async = MagicMock(return_value=asyncio.sleep(0))
-    monkeypatch.setattr(
-        "backend.backends.get_tts_backend_for_engine", lambda e: fake_backend
-    )
+    monkeypatch.setattr("backend.backends.get_tts_backend_for_engine", lambda e: fake_backend)
 
     await backends.load_engine_model("qwen", "default")
     fake_backend.load_model_async.assert_called_once()
@@ -433,12 +410,12 @@ def test_wav_stream_header_uses_sentinel_lengths_for_streaming():
 
     header = _wav_stream_header(sample_rate=16000, channels=2)
     # RIFF size (offset 4, little-endian uint32) and data size (offset 40)
-    riff_size, = struct.unpack_from("<I", header, 4)
-    data_size, = struct.unpack_from("<I", header, 40)
+    (riff_size,) = struct.unpack_from("<I", header, 4)
+    (data_size,) = struct.unpack_from("<I", header, 40)
     assert riff_size == 0xFFFFFFFF
     assert data_size == 0xFFFFFFFF
     # block_align for stereo 16-bit = 4
-    block_align, = struct.unpack_from("<H", header, 32)
+    (block_align,) = struct.unpack_from("<H", header, 32)
     assert block_align == 4
 
 
@@ -502,7 +479,9 @@ def test_audio_to_pcm16le_byte_count_matches_int16_size():
 # ---------------------------------------------------------------------------
 
 
-def _streaming_payload(text: str = "hello world. second sentence. third one.", *, max_chunk_chars: int = 120, crossfade_ms: int = 10):
+def _streaming_payload(
+    text: str = "hello world. second sentence. third one.", *, max_chunk_chars: int = 120, crossfade_ms: int = 10
+):
     """Build a GenerationRequest with the streaming-specific fields used
     by the new chunked code path."""
     from backend import models
@@ -710,9 +689,7 @@ async def test_stream_speech_response_headers_set_no_cache(monkeypatch):
         lambda *a, **kw: asyncio.sleep(0, result=None),
     )
 
-    response = await gen_routes.stream_speech(
-        _streaming_payload("hi."), MagicMock()
-    )
+    response = await gen_routes.stream_speech(_streaming_payload("hi."), MagicMock())
     assert response.media_type == "audio/wav"
     assert response.headers["Cache-Control"] == "no-cache"
     assert response.headers["X-Accel-Buffering"] == "no"
@@ -805,7 +782,7 @@ def test_stream_speech_chains_value_error_cause(monkeypatch):
 def _build_speak_app():
     """Minimal FastAPI app hosting only the speak router, with the
     ``get_db`` dependency overridden so we don't need a real SQLite DB."""
-    from fastapi import Depends, FastAPI
+    from fastapi import FastAPI
     from sqlalchemy.orm import Session
 
     from backend.database import get_db
@@ -825,7 +802,6 @@ def test_get_tts_default_returns_json_with_status_link(monkeypatch):
     """Without stream=true, GET /tts returns JSON with status + audio
     URLs — the default path for non-streaming integrations."""
     from backend import models
-    from backend.mcp_server.resolve import resolve_profile
     from backend.routes import speak as speak_module
 
     fake_generation = MagicMock(spec=models.GenerationResponse)
@@ -938,7 +914,7 @@ def test_get_tts_stream_delegates_to_stream_speech(monkeypatch):
     StreamingResponse with audio/wav content — same code path as POST
     /generate/stream."""
     from fastapi.responses import StreamingResponse
-    from backend import models
+
     from backend.routes import speak as speak_module
 
     fake_profile = MagicMock()
@@ -958,9 +934,7 @@ def test_get_tts_stream_delegates_to_stream_speech(monkeypatch):
     # ``from .generations import stream_speech`` inside the handler, so
     # the patch target is the *defining* module — ``generations`` —
     # not ``speak`` (which has no such attribute).
-    monkeypatch.setattr(
-        "backend.routes.generations.stream_speech", fake_stream_speech
-    )
+    monkeypatch.setattr("backend.routes.generations.stream_speech", fake_stream_speech)
 
     client = TestClient(_build_speak_app())
     response = client.get(
@@ -997,7 +971,6 @@ def test_get_tts_language_query_validated_by_pattern(monkeypatch):
 
 def test_get_tts_empty_text_rejected(monkeypatch):
     """text has min_length=1 — empty text → 422 (not a server crash)."""
-    from backend.routes import speak as speak_module
 
     client = TestClient(_build_speak_app())
     response = client.get(
