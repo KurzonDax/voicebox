@@ -13,6 +13,8 @@ interface GenerationState {
   removePendingStoryAdd: (generationId: string) => string | undefined;
   setActiveGenerationId: (id: string | null) => void;
   activeGenerationId: string | null;
+  /** Manually set the global generating flag (used by Audiobook tab long-form runs). */
+  setIsGenerating: (generating: boolean) => void;
 }
 
 export const useGenerationStore = create<GenerationState>((set, get) => ({
@@ -55,4 +57,6 @@ export const useGenerationStore = create<GenerationState>((set, get) => ({
   },
 
   setActiveGenerationId: (id) => set({ activeGenerationId: id }),
+
+  setIsGenerating: (generating) => set({ isGenerating: generating }),
 }));
