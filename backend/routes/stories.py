@@ -7,9 +7,9 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from .. import database, models
-from ..services import stories
 from ..app import safe_content_disposition
 from ..database import get_db
+from ..services import stories
 
 router = APIRouter()
 
@@ -243,9 +243,7 @@ async def export_story_audio(
             raise HTTPException(status_code=404, detail="Story not found")
 
         try:
-            audio_bytes = await stories.export_story_audio(
-                story_id, db, fmt=fmt, chapters_mode=chapters_mode
-            )
+            audio_bytes = await stories.export_story_audio(story_id, db, fmt=fmt, chapters_mode=chapters_mode)
         except RuntimeError as e:
             # Most likely: ffmpeg missing, timed out, or returned non-zero.
             raise HTTPException(status_code=503, detail=str(e)) from e

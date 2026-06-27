@@ -18,27 +18,27 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from .. import config
-from ..models import (
-    StoryCreate,
-    StoryResponse,
-    StoryDetailResponse,
-    StoryItemDetail,
-    StoryItemCreate,
-    StoryItemBatchUpdate,
-    StoryItemMove,
-    StoryItemTrim,
-    StoryItemVolumeUpdate,
-    StoryItemSplit,
-    StoryItemVersionUpdate,
-)
 from ..database import (
+    Generation as DBGeneration,
     Story as DBStory,
     StoryItem as DBStoryItem,
-    Generation as DBGeneration,
     VoiceProfile as DBVoiceProfile,
 )
-from .history import _get_versions_for_generation
+from ..models import (
+    StoryCreate,
+    StoryDetailResponse,
+    StoryItemBatchUpdate,
+    StoryItemCreate,
+    StoryItemDetail,
+    StoryItemMove,
+    StoryItemSplit,
+    StoryItemTrim,
+    StoryItemVersionUpdate,
+    StoryItemVolumeUpdate,
+    StoryResponse,
+)
 from ..utils.audio import load_audio, save_audio
+from .history import _get_versions_for_generation
 
 
 def _build_item_detail(
@@ -119,7 +119,7 @@ async def create_story(
 
 async def list_stories(
     db: Session,
-) -> List[StoryResponse]:
+) -> list[StoryResponse]:
     """
     List all stories.
 
@@ -145,7 +145,7 @@ async def list_stories(
 async def get_story(
     story_id: str,
     db: Session,
-) -> Optional[StoryDetailResponse]:
+) -> StoryDetailResponse | None:
     """
     Get a story with all its items.
 
@@ -182,7 +182,7 @@ async def update_story(
     story_id: str,
     data: StoryCreate,
     db: Session,
-) -> Optional[StoryResponse]:
+) -> StoryResponse | None:
     """
     Update a story.
 
@@ -244,7 +244,7 @@ async def add_item_to_story(
     story_id: str,
     data: StoryItemCreate,
     db: Session,
-) -> Optional[StoryItemDetail]:
+) -> StoryItemDetail | None:
     """
     Add a generation to a story.
 
@@ -330,7 +330,7 @@ async def move_story_item(
     item_id: str,
     data: StoryItemMove,
     db: Session,
-) -> Optional[StoryItemDetail]:
+) -> StoryItemDetail | None:
     """
     Move a story item (update position and/or track).
 
@@ -422,7 +422,7 @@ async def trim_story_item(
     item_id: str,
     data: StoryItemTrim,
     db: Session,
-) -> Optional[StoryItemDetail]:
+) -> StoryItemDetail | None:
     """
     Trim a story item (update trim_start_ms and trim_end_ms).
 
@@ -480,13 +480,9 @@ async def update_story_item_volume(
     item_id: str,
     data: StoryItemVolumeUpdate,
     db: Session,
-) -> Optional[StoryItemDetail]:
+) -> StoryItemDetail | None:
     """Update a story item's playback volume (per-clip linear gain)."""
-    item = (
-        db.query(DBStoryItem)
-        .filter_by(id=item_id, story_id=story_id)
-        .first()
-    )
+    item = db.query(DBStoryItem).filter_by(id=item_id, story_id=story_id).first()
     if not item:
         return None
     generation = db.query(DBGeneration).filter_by(id=item.generation_id).first()
@@ -511,7 +507,7 @@ async def split_story_item(
     item_id: str,
     data: StoryItemSplit,
     db: Session,
-) -> Optional[List[StoryItemDetail]]:
+) -> list[StoryItemDetail] | None:
     """
     Split a story item at a given time, creating two clips.
 
@@ -598,7 +594,7 @@ async def duplicate_story_item(
     story_id: str,
     item_id: str,
     db: Session,
-) -> Optional[StoryItemDetail]:
+) -> StoryItemDetail | None:
     """
     Duplicate a story item, creating a copy with all properties.
 
@@ -702,10 +698,10 @@ async def update_story_item_times(
 
 async def reorder_story_items(
     story_id: str,
-    generation_ids: List[str],
+    generation_ids: list[str],
     db: Session,
     gap_ms: int = 200,
-) -> Optional[List[StoryItemDetail]]:
+) -> list[StoryItemDetail] | None:
     """
     Reorder story items and recalculate timecodes.
 
@@ -769,7 +765,7 @@ async def set_story_item_version(
     item_id: str,
     data: StoryItemVersionUpdate,
     db: Session,
-) -> Optional[StoryItemDetail]:
+) -> StoryItemDetail | None:
     """
     Pin a story item to a specific generation version.
 
@@ -836,14 +832,15 @@ class _Chapter:
     title: str
 
 
-# Latin sentences end with [.!?] + whitespace; CJK sentences end with [。！？]
-# and conventionally have no following whitespace, so the boundary is the mark
-# itself. Both lookbehinds are zero-width — split() just consumes whitespace
-# when present.
-_SENTENCE_BREAK = re.compile(r"(?<=[.!?])\s+|(?<=[。！？])")
+# Latin sentences end with [.!?] + whitespace; CJK sentences end with
+# [U+3002 U+FF01 U+FF1F] (ideographic full stop, fullwidth exclamation,
+# fullwidth question) and conventionally have no following whitespace, so
+# the boundary is the mark itself. Both lookbehinds are zero-width --
+# split() just consumes whitespace when present.
+_SENTENCE_BREAK = re.compile(r"(?<=[.!?])\s+|(?<=[\u3002\uff01\uff1f])")
 
 
-def _chapter_title_from_text(text: Optional[str], max_len: int = 80) -> str:
+def _chapter_title_from_text(text: str | None, max_len: int = 80) -> str:
     """Derive a chapter title from the linked generation's text.
 
     Takes the first sentence (or the leading slice if the sentence is long).
@@ -860,9 +857,9 @@ def _chapter_title_from_text(text: Optional[str], max_len: int = 80) -> str:
 
 
 def _derive_chapters_auto(
-    segments: List[dict],
+    segments: list[dict],
     total_duration_ms: int,
-) -> List[_Chapter]:
+) -> list[_Chapter]:
     """One chapter per story segment, ordered by start_time_ms.
 
     Each segment dict must carry ``start_time_ms`` and ``text``. The final
@@ -871,14 +868,12 @@ def _derive_chapters_auto(
     boundary) so multi-track items don't produce zero-length chapters.
     """
     ordered = sorted(segments, key=lambda s: s["start_time_ms"])
-    chapters: List[_Chapter] = []
+    chapters: list[_Chapter] = []
     for seg in ordered:
         start = int(seg["start_time_ms"])
         if chapters and chapters[-1].start_ms == start:
             continue
-        chapters.append(
-            _Chapter(start_ms=start, end_ms=0, title=_chapter_title_from_text(seg.get("text")))
-        )
+        chapters.append(_Chapter(start_ms=start, end_ms=0, title=_chapter_title_from_text(seg.get("text"))))
     for i, ch in enumerate(chapters):
         ch.end_ms = chapters[i + 1].start_ms if i + 1 < len(chapters) else total_duration_ms
     # Skip degenerate trailing chapter that would have zero duration.
@@ -892,16 +887,10 @@ def _escape_ffmetadata(value: str) -> str:
     ``;``, ``#``, ``\\``, and literal newlines must be backslash-escaped, or
     ffmpeg will reject (or silently mangle) the chapter entry.
     """
-    return (
-        value.replace("\\", "\\\\")
-        .replace("=", "\\=")
-        .replace(";", "\\;")
-        .replace("#", "\\#")
-        .replace("\n", "\\n")
-    )
+    return value.replace("\\", "\\\\").replace("=", "\\=").replace(";", "\\;").replace("#", "\\#").replace("\n", "\\n")
 
 
-def _write_ffmetadata(chapters: List[_Chapter], path: Path) -> None:
+def _write_ffmetadata(chapters: list[_Chapter], path: Path) -> None:
     """Serialize chapter list to an FFMETADATA1 file ffmpeg can ingest via ``-i``."""
     lines = [";FFMETADATA1"]
     for ch in chapters:
@@ -921,19 +910,17 @@ def _ffmpeg_encode(
     wav_path: Path,
     out_path: Path,
     fmt: str,
-    chapters: Optional[List[_Chapter]],
+    chapters: list[_Chapter] | None,
 ) -> None:
     """Transcode WAV → fmt with optional embedded chapter metadata.
 
     Raises RuntimeError on missing ffmpeg or non-zero exit.
     """
     if shutil.which("ffmpeg") is None:
-        raise RuntimeError(
-            "ffmpeg is required for m4b/mp3 story export — install it or request format=wav"
-        )
+        raise RuntimeError("ffmpeg is required for m4b/mp3 story export — install it or request format=wav")
 
-    cmd: List[str] = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", str(wav_path)]
-    meta_path: Optional[Path] = None
+    cmd: list[str] = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", str(wav_path)]
+    meta_path: Path | None = None
     try:
         if chapters:
             meta_path = wav_path.with_suffix(".chapters.txt")
@@ -981,7 +968,7 @@ async def export_story_audio(
     db: Session,
     fmt: str = "wav",
     chapters_mode: str = "none",
-) -> Optional[bytes]:
+) -> bytes | None:
     """
     Export story as a single mixed audio file with timecode-based mixing.
 
@@ -1115,12 +1102,12 @@ async def export_story_audio(
     if fmt not in ("wav", "m4b", "mp3"):
         raise ValueError(f"Unsupported export format: {fmt}")
 
-    chapters: Optional[List[_Chapter]] = None
+    chapters: list[_Chapter] | None = None
     if fmt != "wav" and chapters_mode == "auto":
         chapters = _derive_chapters_auto(audio_data, max_end_time_ms) or None
 
     wav_path = _make_tempfile(suffix=".wav")
-    out_path: Optional[Path] = None
+    out_path: Path | None = None
     try:
         save_audio(final_audio, str(wav_path), sample_rate)
         if fmt == "wav":

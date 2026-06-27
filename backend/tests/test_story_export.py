@@ -88,7 +88,7 @@ class TestDeriveChaptersAuto:
 
 class TestFFMetadataEscaping:
     @pytest.mark.parametrize(
-        "raw,escaped",
+        ("raw", "escaped"),
         [
             ("simple", "simple"),
             ("a=b", "a\\=b"),
