@@ -45,7 +45,14 @@ const ENGINE_DESCRIPTIONS: Record<string, string> = {
 const ENGLISH_ONLY_ENGINES = new Set(['luxtts', 'chatterbox_turbo']);
 
 /** Engines that support cloned (reference audio) profiles. */
-const CLONING_ENGINES = new Set(['qwen', 'luxtts', 'chatterbox', 'chatterbox_turbo', 'tada', 'moss_tts_nano']);
+const CLONING_ENGINES = new Set([
+  'qwen',
+  'luxtts',
+  'chatterbox',
+  'chatterbox_turbo',
+  'tada',
+  'moss_tts_nano',
+]);
 
 function getAvailableOptions(selectedProfile?: VoiceProfileResponse | null) {
   if (!selectedProfile) return ENGINE_OPTIONS;
