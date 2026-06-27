@@ -144,6 +144,42 @@ class TestLIKEEscaping:
 
 
 # ---------------------------------------------------------------------------
+# SQL injection — single quotes must never reach the SQL parser as code.
+# SQLAlchemy parameterises the LIKE argument, so ' cannot break out.
+# ---------------------------------------------------------------------------
+
+
+class TestSQLInjection:
+    """Single-quote and classic injection payloads must be inert."""
+
+    def test_single_quote_does_not_break_query(self, db):
+        """A lone ' in the search string must not raise or match unrelated rows."""
+        db.add(DBGeneration(id="g6", profile_id="p1", text="it's working", status="completed"))
+        db.commit()
+
+        # Negative: no row contains "O'Brian" → zero results, no exception.
+        result = _list_generations(HistoryQuery(search="O'Brian"), db)
+        assert result.total == 0
+
+    def test_single_quote_positive_match(self, db):
+        """A search containing ' must match rows whose text literally contains that '."""
+        db.add(DBGeneration(id="g6", profile_id="p1", text="it's working", status="completed"))
+        db.commit()
+
+        result = _list_generations(HistoryQuery(search="it's"), db)
+        ids = {item.id for item in result.items}
+        assert "g6" in ids
+
+    def test_classic_injection_payload_is_inert(self, db):
+        """A textbook '; DROP TABLE-- payload must be treated as a literal search string."""
+        payload = "'; DROP TABLE generations; --"
+        result = _list_generations(HistoryQuery(search=payload), db)
+        assert result.total == 0  # no row contains that literal string
+        # The generations table must still exist (not dropped).
+        assert db.query(DBGeneration).count() == 5
+
+
+# ---------------------------------------------------------------------------
 # Pagination
 # ---------------------------------------------------------------------------
 
