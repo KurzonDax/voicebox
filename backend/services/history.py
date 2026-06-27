@@ -3,7 +3,7 @@ Generation history management module.
 """
 
 from typing import List, Optional, Tuple
-from datetime import datetime
+from datetime import UTC, datetime
 import uuid
 import shutil
 from pathlib import Path
@@ -104,7 +104,7 @@ async def create_generation(
         model_size=model_size,
         status=status,
         source=source,
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(UTC),
     )
 
     db.add(db_generation)
@@ -188,10 +188,15 @@ async def list_generations(
     if query.profile_id:
         q = q.filter(DBGeneration.profile_id == query.profile_id)
     
-    # Apply search filter (searches in text content)
+    # Apply search filter (searches in text content).
+    # Escape LIKE metacharacters so a query like "50%" or "path\\to\\file"
+    # matches literally instead of being treated as a pattern. Without this,
+    # a user could submit "%" and get every row back (info-disclosure),
+    # or "_" and bypass substring filters.
     if query.search:
-        search_pattern = f"%{query.search}%"
-        q = q.filter(DBGeneration.text.like(search_pattern))
+        escaped = query.search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        search_pattern = f"%{escaped}%"
+        q = q.filter(DBGeneration.text.like(search_pattern, escape="\\"))
     
     # Get total count before pagination
     total_count = q.count()
