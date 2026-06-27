@@ -43,7 +43,26 @@ setup-python:
     fi
     echo "Installing Python dependencies..."
     {{ pip }} install --upgrade pip -q
-    {{ pip }} install -r {{ backend_dir }}/requirements.txt
+
+    # Detect NVIDIA GPU on Linux and pin torch to CUDA 12.8 (cu128).
+    # cu130 (CUDA 13.0) requires driver >= 576; most systems top out at 570 (CUDA 12.8).
+    if [ "$(uname)" = "Linux" ] && command -v nvidia-smi &>/dev/null && nvidia-smi &>/dev/null; then
+        echo "NVIDIA GPU detected — installing PyTorch with CUDA 12.8 (cu128)..."
+        _constraints=$(mktemp)
+        printf 'torch==2.7.0+cu128\ntorchaudio==2.7.0+cu128\n' > "$_constraints"
+        {{ pip }} install \
+            --extra-index-url https://download.pytorch.org/whl/cu128 \
+            -r {{ backend_dir }}/requirements.txt \
+            -c "$_constraints"
+        rm -f "$_constraints"
+    elif [ "$(uname -m)" = "arm64" ] && [ "$(uname)" = "Darwin" ]; then
+        echo "Apple Silicon detected — using default PyTorch (MLX path)..."
+        {{ pip }} install -r {{ backend_dir }}/requirements.txt
+    else
+        echo "No NVIDIA GPU detected — using CPU-only PyTorch."
+        {{ pip }} install -r {{ backend_dir }}/requirements.txt
+    fi
+
     # Chatterbox pins numpy<1.26 / torch==2.6 which break on Python 3.12+
     {{ pip }} install --no-deps chatterbox-tts
     # HumeAI TADA pins torch>=2.7,<2.8 which conflicts with our torch>=2.1
@@ -68,7 +87,8 @@ setup-python:
             {{ pip }} install -r {{ backend_dir }}/requirements-linux.txt
         fi
     fi
-    {{ pip }} install git+https://github.com/QwenLM/Qwen3-TTS.git
+    # --no-deps prevents Qwen3-TTS from overriding the pinned torch version
+    {{ pip }} install --no-deps git+https://github.com/QwenLM/Qwen3-TTS.git
     {{ pip }} install pyinstaller ruff pytest pytest-asyncio -q
     echo "Python environment ready."
 
@@ -106,7 +126,8 @@ setup-python:
     & "{{ pip }}" install --no-deps hume-tada
     # MOSS-TTS-Nano pins torch==2.7.0 which conflicts with our torch>=2.2
     & "{{ pip }}" install --no-deps git+https://github.com/OpenMOSS/MOSS-TTS-Nano.git
-    & "{{ pip }}" install git+https://github.com/QwenLM/Qwen3-TTS.git
+    # --no-deps prevents Qwen3-TTS from overriding the pinned torch version
+    & "{{ pip }}" install --no-deps git+https://github.com/QwenLM/Qwen3-TTS.git
     & "{{ pip }}" install pyinstaller ruff pytest pytest-asyncio -q
     Write-Host "Python environment ready."
 
@@ -223,12 +244,16 @@ build-server: _ensure-venv
 build-server: _ensure-venv
     $ErrorActionPreference = "Stop"; \
     $env:PATH = "{{ venv_bin }};$env:PATH"; \
-    & "{{ python }}" backend/build_binary.py; \
-    if ($LASTEXITCODE -ne 0) { throw "build_binary.py failed with exit code $LASTEXITCODE" }; \
     $triple = (rustc --print host-tuple); \
     New-Item -ItemType Directory -Path "{{ tauri_dir }}/src-tauri/binaries" -Force | Out-Null; \
+    & "{{ python }}" backend/build_binary.py; \
+    if ($LASTEXITCODE -ne 0) { throw "build_binary.py failed with exit code $LASTEXITCODE" }; \
     Copy-Item "backend/dist/voicebox-server.exe" "{{ tauri_dir }}/src-tauri/binaries/voicebox-server-$triple.exe" -Force; \
-    Write-Host "Copied sidecar: voicebox-server-$triple.exe"
+    Write-Host "Copied sidecar: voicebox-server-$triple.exe"; \
+    & "{{ python }}" backend/build_binary.py --shim; \
+    if ($LASTEXITCODE -ne 0) { throw "build_binary.py --shim failed with exit code $LASTEXITCODE" }; \
+    Copy-Item "backend/dist/voicebox-mcp.exe" "{{ tauri_dir }}/src-tauri/binaries/voicebox-mcp-$triple.exe" -Force; \
+    Write-Host "Copied sidecar: voicebox-mcp-$triple.exe"
 
 # Build CUDA server binary and place in app data dir for local testing
 [windows]

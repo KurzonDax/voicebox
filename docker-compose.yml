@@ -17,9 +17,12 @@ services:
       # Named volume for profiles, DB, cache (persists across container restarts)
       - voicebox-data:/app/data
 
+      # Numba JIT compilation cache (persists across restarts for faster startup)
+      - numba-cache:/home/voicebox/.cache/numba
+
     environment:
       - LOG_LEVEL=info
-      - NUMBA_CACHE_DIR=/tmp/numba_cache
+      - NUMBA_CACHE_DIR=/home/voicebox/.cache/numba
       # Keep HF cache under /app/data so the non-root user can always write.
       - HF_HUB_CACHE=/app/data/cache/huggingface/hub
 
@@ -38,3 +41,4 @@ networks:
 
 volumes:
   voicebox-data:
+  numba-cache:
