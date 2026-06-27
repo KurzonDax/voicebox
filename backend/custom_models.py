@@ -7,6 +7,7 @@ directory.  All reads and writes are serialised through a module-level
 crash mid-write can never leave a half-written config file.
 """
 
+import contextlib
 import json
 import logging
 import os
@@ -74,10 +75,8 @@ def _write(entries: list[dict]) -> None:
         os.replace(tmp_path, str(path))
     except BaseException:
         # Clean up the temp file on failure
-        try:
+        with contextlib.suppress(OSError):
             os.unlink(tmp_path)
-        except OSError:
-            pass
         raise
 
 

@@ -251,7 +251,11 @@ export function ModelManagement() {
       queryClient.invalidateQueries({ queryKey: ['modelStatus'] });
     },
     onError: (error: Error) => {
-      toast({ title: 'Failed to add custom model', description: error.message, variant: 'destructive' });
+      toast({
+        title: 'Failed to add custom model',
+        description: error.message,
+        variant: 'destructive',
+      });
     },
   });
 
@@ -263,7 +267,11 @@ export function ModelManagement() {
       queryClient.invalidateQueries({ queryKey: ['modelStatus'] });
     },
     onError: (error: Error) => {
-      toast({ title: 'Failed to remove custom model', description: error.message, variant: 'destructive' });
+      toast({
+        title: 'Failed to remove custom model',
+        description: error.message,
+        variant: 'destructive',
+      });
     },
   });
 
@@ -732,10 +740,7 @@ export function ModelManagement() {
                     (m) => m.model_name === `custom:${cm.id}`,
                   );
                   return (
-                    <div
-                      key={cm.id}
-                      className="flex items-center gap-3 px-3 py-2.5 group"
-                    >
+                    <div key={cm.id} className="flex items-center gap-3 px-3 py-2.5 group">
                       <div className="shrink-0">
                         {cmStatus?.downloaded ? (
                           <CircleCheck className="h-4 w-4 text-emerald-500" />
@@ -1301,7 +1306,8 @@ export function ModelManagement() {
           <DialogHeader>
             <DialogTitle>Add Custom HuggingFace Model</DialogTitle>
             <DialogDescription>
-              Add a TTS model from HuggingFace Hub. The model will appear in your model list for download tracking.
+              Add a TTS model from HuggingFace Hub. The model will appear in your model list for
+              download tracking.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 pt-2">
