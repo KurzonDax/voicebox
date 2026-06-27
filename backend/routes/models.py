@@ -1,6 +1,7 @@
 """Model management endpoints."""
 
 import asyncio
+import contextlib
 import shutil
 from pathlib import Path
 
@@ -56,7 +57,7 @@ async def load_model(model_size: str = "1.7B"):
         await tts_model.load_model_async(model_size)
         return {"message": f"Model {model_size} loaded successfully"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/models/unload")
@@ -68,7 +69,7 @@ async def unload_model():
         tts.unload_tts_model()
         return {"message": "Model unloaded successfully"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/models/{model_name}/unload")
@@ -144,10 +145,8 @@ async def migrate_models(request: models.ModelMigrateRequest):
     destination.mkdir(parents=True, exist_ok=True)
 
     same_fs = False
-    try:
+    with contextlib.suppress(OSError):
         same_fs = source.stat().st_dev == destination.stat().st_dev
-    except OSError:
-        pass
 
     async def migrate_background():
         moved = 0
@@ -227,7 +226,7 @@ async def get_model_status():
     """Get status of all available models."""
     from huggingface_hub import constants as hf_constants
 
-    backend_type = get_backend_type()
+    get_backend_type()
     task_manager = get_task_manager()
 
     active_download_names = {task.model_name for task in task_manager.get_active_downloads()}
@@ -275,10 +274,8 @@ async def get_model_status():
 
     cache_info = None
     if use_scan_cache:
-        try:
+        with contextlib.suppress(Exception):
             cache_info = scan_cache_dir()
-        except Exception:
-            pass
 
     statuses = []
 
