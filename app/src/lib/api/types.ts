@@ -546,3 +546,19 @@ export interface MCPClientBindingListResponse {
 export interface AppSettings {
   use_48k_speech_tokenizer: boolean;
 }
+
+/* ─── Custom HuggingFace Models ──────────────────────────────────────── */
+
+export interface CustomModelCreate {
+  hf_repo_id: string;
+  display_name?: string;
+  engine?: string;
+}
+
+export interface CustomModelResponse {
+  id: string;
+  hf_repo_id: string;
+  display_name: string;
+  engine?: string;
+  created_at: string;
+}

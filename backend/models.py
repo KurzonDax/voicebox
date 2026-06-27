@@ -18,16 +18,16 @@ class VoiceProfileCreate(BaseModel):
     """Request model for creating a voice profile."""
 
     name: str = Field(..., min_length=1, max_length=100)
-    description: Optional[str] = Field(None, max_length=500)
+    description: str | None = Field(None, max_length=500)
     language: str = Field(
         default="en", pattern="^(zh|en|ja|ko|de|fr|ru|pt|es|it|he|ar|da|el|fi|hi|ms|nl|no|pl|sv|sw|tr|hu|fa|cs)$"
     )
-    voice_type: Optional[str] = Field(default="cloned", pattern="^(cloned|preset|designed)$")
-    preset_engine: Optional[str] = Field(None, max_length=50)
-    preset_voice_id: Optional[str] = Field(None, max_length=100)
-    design_prompt: Optional[str] = Field(None, max_length=2000)
-    default_engine: Optional[str] = Field(None, max_length=50)
-    personality: Optional[str] = Field(None, max_length=2000)
+    voice_type: str | None = Field(default="cloned", pattern="^(cloned|preset|designed)$")
+    preset_engine: str | None = Field(None, max_length=50)
+    preset_voice_id: str | None = Field(None, max_length=100)
+    design_prompt: str | None = Field(None, max_length=2000)
+    default_engine: str | None = Field(None, max_length=50)
+    personality: str | None = Field(None, max_length=2000)
 
 
 class VoiceProfileResponse(BaseModel):
@@ -35,16 +35,16 @@ class VoiceProfileResponse(BaseModel):
 
     id: str
     name: str
-    description: Optional[str]
+    description: str | None
     language: str
-    avatar_path: Optional[str] = None
-    effects_chain: Optional[list["EffectConfig"]] = None
+    avatar_path: str | None = None
+    effects_chain: list["EffectConfig"] | None = None
     voice_type: str = "cloned"
-    preset_engine: Optional[str] = None
-    preset_voice_id: Optional[str] = None
-    design_prompt: Optional[str] = None
-    default_engine: Optional[str] = None
-    personality: Optional[str] = None
+    preset_engine: str | None = None
+    preset_voice_id: str | None = None
+    design_prompt: str | None = None
+    default_engine: str | None = None
+    personality: str | None = None
     generation_count: int = 0
     sample_count: int = 0
     created_at: datetime
@@ -112,8 +112,7 @@ class GenerationRequest(BaseModel):
         default=50, ge=0, le=500, description="Crossfade duration in ms between chunks (0 for hard cut)"
     )
     normalize: bool = Field(default=True, description="Normalize output audio volume")
-    effects_chain: Optional[list["EffectConfig"]] = Field(
-        None, description="Effects chain to apply after generation (overrides profile default)"
+    effects_chain: list["EffectConfig"] | None = Field(        None, description="Effects chain to apply after generation (overrides profile default)"
     )
 
 
@@ -124,20 +123,19 @@ class GenerationResponse(BaseModel):
     profile_id: str
     text: str
     language: str
-    audio_path: Optional[str] = None
-    duration: Optional[float] = None
-    seed: Optional[int] = None
-    instruct: Optional[str] = None
-    engine: Optional[str] = "qwen"
-    model_size: Optional[str] = None
+    audio_path: str | None = None
+    duration: float | None = None
+    seed: int | None = None
+    instruct: str | None = None
+    engine: str | None = "qwen"
+    model_size: str | None = None
     status: str = "completed"
-    error: Optional[str] = None
+    error: str | None = None
     is_favorited: bool = False
     source: GenerationSource = "manual"
     created_at: datetime
-    versions: Optional[list["GenerationVersionResponse"]] = None
-    active_version_id: Optional[str] = None
-
+    versions: list["GenerationVersionResponse"] | None = None
+    active_version_id: str | None = None
     class Config:
         from_attributes = True
 
@@ -145,8 +143,8 @@ class GenerationResponse(BaseModel):
 class HistoryQuery(BaseModel):
     """Query model for generation history."""
 
-    profile_id: Optional[str] = None
-    search: Optional[str] = None
+    profile_id: str | None = None
+    search: str | None = None
     limit: int = Field(default=50, ge=1, le=100)
     offset: int = Field(default=0, ge=0)
 
@@ -159,19 +157,18 @@ class HistoryResponse(BaseModel):
     profile_name: str
     text: str
     language: str
-    audio_path: Optional[str] = None
-    duration: Optional[float] = None
-    seed: Optional[int] = None
-    instruct: Optional[str] = None
-    engine: Optional[str] = "qwen"
-    model_size: Optional[str] = None
+    audio_path: str | None = None
+    duration: float | None = None
+    seed: int | None = None
+    instruct: str | None = None
+    engine: str | None = "qwen"
+    model_size: str | None = None
     status: str = "completed"
-    error: Optional[str] = None
+    error: str | None = None
     is_favorited: bool = False
     created_at: datetime
-    versions: Optional[list["GenerationVersionResponse"]] = None
-    active_version_id: Optional[str] = None
-
+    versions: list["GenerationVersionResponse"] | None = None
+    active_version_id: str | None = None
     class Config:
         from_attributes = True
 
@@ -186,8 +183,8 @@ class HistoryListResponse(BaseModel):
 class TranscriptionRequest(BaseModel):
     """Request model for audio transcription."""
 
-    language: Optional[str] = Field(None, pattern="^(en|zh|ja|ko|de|fr|ru|pt|es|it)$")
-    model: Optional[str] = Field(None, pattern="^(base|small|medium|large|turbo)$")
+    language: str | None = Field(None, pattern="^(en|zh|ja|ko|de|fr|ru|pt|es|it)$")
+    model: str | None = Field(None, pattern="^(base|small|medium|large|turbo)$")
 
 
 class TranscriptionResponse(BaseModel):
@@ -211,13 +208,13 @@ class CaptureResponse(BaseModel):
     id: str
     audio_path: str
     source: str
-    language: Optional[str] = None
-    duration_ms: Optional[int] = None
+    language: str | None = None
+    duration_ms: int | None = None
     transcript_raw: str
-    transcript_refined: Optional[str] = None
-    stt_model: Optional[str] = None
-    llm_model: Optional[str] = None
-    refinement_flags: Optional[RefinementFlagsModel] = None
+    transcript_refined: str | None = None
+    stt_model: str | None = None
+    llm_model: str | None = None
+    refinement_flags: RefinementFlagsModel | None = None
     created_at: datetime
 
     class Config:
@@ -249,15 +246,15 @@ class CaptureCreateResponse(CaptureResponse):
 class CaptureRefineRequest(BaseModel):
     """Request to refine a capture's transcript via the LLM."""
 
-    flags: Optional[RefinementFlagsModel] = None
-    model_size: Optional[str] = Field(default=None, pattern="^(0\\.6B|1\\.7B|4B)$")
+    flags: RefinementFlagsModel | None = None
+    model_size: str | None = Field(default=None, pattern="^(0\\.6B|1\\.7B|4B)$")
 
 
 class CaptureRetranscribeRequest(BaseModel):
     """Request to re-run STT on a capture's audio with a different model."""
 
-    model: Optional[str] = Field(None, pattern="^(base|small|medium|large|turbo)$")
-    language: Optional[str] = Field(None, pattern="^(en|zh|ja|ko|de|fr|ru|pt|es|it)$")
+    model: str | None = Field(None, pattern="^(base|small|medium|large|turbo)$")
+    language: str | None = Field(None, pattern="^(en|zh|ja|ko|de|fr|ru|pt|es|it)$")
 
 
 class CaptureSettingsResponse(BaseModel):
@@ -271,7 +268,7 @@ class CaptureSettingsResponse(BaseModel):
     self_correction: bool = True
     preserve_technical: bool = True
     allow_auto_paste: bool = True
-    default_playback_voice_id: Optional[str] = None
+    default_playback_voice_id: str | None = None
     hotkey_enabled: bool = False
     chord_push_to_talk_keys: list[str] = Field(
         default_factory=default_push_to_talk_chord
@@ -334,10 +331,10 @@ class GenerationSettingsResponse(BaseModel):
 class GenerationSettingsUpdate(BaseModel):
     """Partial update for generation settings — every field is optional."""
 
-    max_chunk_chars: Optional[int] = Field(default=None, ge=100, le=5000)
-    crossfade_ms: Optional[int] = Field(default=None, ge=0, le=500)
-    normalize_audio: Optional[bool] = None
-    autoplay_on_generate: Optional[bool] = None
+    max_chunk_chars: int | None = Field(default=None, ge=100, le=5000)
+    crossfade_ms: int | None = Field(default=None, ge=0, le=500)
+    normalize_audio: bool | None = None
+    autoplay_on_generate: bool | None = None
 
 
 class MCPClientBindingResponse(BaseModel):
@@ -346,14 +343,14 @@ class MCPClientBindingResponse(BaseModel):
     opt-in personality-rewrite default."""
 
     client_id: str
-    label: Optional[str] = None
-    profile_id: Optional[str] = None
-    default_engine: Optional[str] = Field(
+    label: str | None = None
+    profile_id: str | None = None
+    default_engine: str | None = Field(
         None,
         pattern="^(qwen|qwen_custom_voice|luxtts|chatterbox|chatterbox_turbo|tada|kokoro|moss_tts_nano|minimax)$",
     )
     default_personality: bool = False
-    last_seen_at: Optional[datetime] = None
+    last_seen_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -365,9 +362,9 @@ class MCPClientBindingUpsert(BaseModel):
     """Create or update a binding. Matched by ``client_id``."""
 
     client_id: str = Field(..., min_length=1, max_length=64)
-    label: Optional[str] = Field(None, max_length=128)
-    profile_id: Optional[str] = None
-    default_engine: Optional[str] = Field(
+    label: str | None = Field(None, max_length=128)
+    profile_id: str | None = None
+    default_engine: str | None = Field(
         None,
         pattern="^(qwen|qwen_custom_voice|luxtts|chatterbox|chatterbox_turbo|tada|kokoro|moss_tts_nano|minimax)$",
     )
@@ -382,19 +379,19 @@ class SpeakRequest(BaseModel):
     """Body for POST /speak — non-MCP REST surface that mirrors voicebox.speak."""
 
     text: str = Field(..., min_length=1, max_length=10000)
-    profile: Optional[str] = Field(
+    profile: str | None = Field(
         None,
         description="Voice profile name or id. Falls back to per-client binding, then default.",
     )
-    engine: Optional[str] = Field(
+    engine: str | None = Field(
         None,
         pattern="^(qwen|qwen_custom_voice|luxtts|chatterbox|chatterbox_turbo|tada|kokoro|moss_tts_nano|minimax)$",
     )
-    personality: Optional[bool] = Field(
+    personality: bool | None = Field(
         None,
         description="When true and the profile has a personality prompt, the input text is rewritten in-character before TTS. When null, the per-client binding's default_personality flag decides.",
     )
-    language: Optional[str] = Field(
+    language: str | None = Field(
         None,
         pattern="^(zh|en|ja|ko|de|fr|ru|pt|es|it|he|ar|da|el|fi|hi|ms|nl|no|pl|sv|sw|tr|hu|fa|cs)$",
     )
@@ -404,16 +401,15 @@ class LLMGenerateRequest(BaseModel):
     """Request model for LLM text generation."""
 
     prompt: str = Field(..., min_length=1, max_length=50000)
-    system: Optional[str] = Field(None, max_length=4000)
-    model_size: Optional[str] = Field(default="0.6B", pattern="^(0\\.6B|1\\.7B|4B)$")
+    system: str | None = Field(None, max_length=4000)
+    model_size: str | None = Field(default="0.6B", pattern="^(0\\.6B|1\\.7B|4B)$")
     max_tokens: int = Field(default=512, ge=1, le=4096)
     temperature: float = Field(default=0.7, ge=0.0, le=2.0)
     # Few-shot (user, assistant) pairs prepended as real chat turns.
     # Used by the refinement service to pin tricky rules (imperatives
     # staying imperatives, technical-term punctuation) that small models
     # lose when the examples live inline in the system prompt.
-    examples: Optional[list[list[str]]] = Field(default=None, max_length=8)
-
+    examples: list[list[str]] | None = Field(default=None, max_length=8)
 
 class LLMGenerateResponse(BaseModel):
     """Response model for LLM text generation."""
@@ -449,7 +445,7 @@ class ModelReadiness(BaseModel):
     model_name: str
     display_name: str
     size: str
-    size_mb: Optional[int] = None
+    size_mb: int | None = None
 
 
 class CaptureReadinessResponse(BaseModel):
@@ -469,14 +465,14 @@ class HealthResponse(BaseModel):
 
     status: str
     model_loaded: bool
-    model_downloaded: Optional[bool] = None  # Whether model is cached/downloaded
-    model_size: Optional[str] = None  # Current model size if loaded
+    model_downloaded: bool | None = None  # Whether model is cached/downloaded
+    model_size: str | None = None  # Current model size if loaded
     gpu_available: bool
-    gpu_type: Optional[str] = None  # GPU type (CUDA, MPS, or None)
-    vram_used_mb: Optional[float] = None
-    backend_type: Optional[str] = None  # Backend type (mlx or pytorch)
-    backend_variant: Optional[str] = None  # Runtime/backend variant (cpu, cuda, xpu, or metal)
-    gpu_compatibility_warning: Optional[str] = None  # Warning if GPU arch unsupported
+    gpu_type: str | None = None  # GPU type (CUDA, MPS, or None)
+    vram_used_mb: float | None = None
+    backend_type: str | None = None  # Backend type (mlx or pytorch)
+    backend_variant: str | None = None  # Binary variant (cpu or cuda)
+    gpu_compatibility_warning: str | None = None  # Warning if GPU arch unsupported
 
 
 class DirectoryCheck(BaseModel):
@@ -485,15 +481,15 @@ class DirectoryCheck(BaseModel):
     path: str
     exists: bool
     writable: bool
-    error: Optional[str] = None
+    error: str | None = None
 
 
 class FilesystemHealthResponse(BaseModel):
     """Response model for filesystem health check."""
 
     healthy: bool
-    disk_free_mb: Optional[float] = None
-    disk_total_mb: Optional[float] = None
+    disk_free_mb: float | None = None
+    disk_total_mb: float | None = None
     directories: list[DirectoryCheck]
 
 
@@ -502,10 +498,10 @@ class ModelStatus(BaseModel):
 
     model_name: str
     display_name: str
-    hf_repo_id: Optional[str] = None  # HuggingFace repository ID
+    hf_repo_id: str | None = None  # HuggingFace repository ID
     downloaded: bool
     downloading: bool = False  # True if download is in progress
-    size_mb: Optional[float] = None
+    size_mb: float | None = None
     loaded: bool = False
     cuda_arch_warning: Optional[str] = None  # Set when GPU arch mismatches the CUDA binary
     platform_compatible: bool = True  # False when requires != [] and current platform not in requires
@@ -530,17 +526,40 @@ class ModelMigrateRequest(BaseModel):
     destination: str
 
 
+class CustomModelCreate(BaseModel):
+    """Request model for adding a custom HuggingFace model."""
+
+    hf_repo_id: str = Field(
+        ...,
+        min_length=3,
+        max_length=200,
+        pattern=r"^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+$",
+    )
+    display_name: str | None = Field(None, min_length=1, max_length=200)
+    engine: str | None = Field(None, max_length=50)
+
+
+class CustomModelResponse(BaseModel):
+    """Response model for a custom HuggingFace model."""
+
+    id: str
+    hf_repo_id: str
+    display_name: str
+    engine: str | None = None
+    created_at: str
+
+
 class ActiveDownloadTask(BaseModel):
     """Response model for active download task."""
 
     model_name: str
     status: str
     started_at: datetime
-    error: Optional[str] = None
-    progress: Optional[float] = None  # 0-100 percentage
-    current: Optional[int] = None  # bytes downloaded
-    total: Optional[int] = None  # total bytes
-    filename: Optional[str] = None  # current file being downloaded
+    error: str | None = None
+    progress: float | None = None  # 0-100 percentage
+    current: int | None = None  # bytes downloaded
+    total: int | None = None  # total bytes
+    filename: str | None = None  # current file being downloaded
 
 
 class ActiveGenerationTask(BaseModel):
@@ -569,9 +588,8 @@ class AudioChannelCreate(BaseModel):
 class AudioChannelUpdate(BaseModel):
     """Request model for updating an audio channel."""
 
-    name: Optional[str] = Field(None, min_length=1, max_length=100)
-    device_ids: Optional[list[str]] = None
-
+    name: str | None = Field(None, min_length=1, max_length=100)
+    device_ids: list[str] | None = None
 
 class AudioChannelResponse(BaseModel):
     """Response model for audio channel."""
@@ -602,7 +620,7 @@ class StoryCreate(BaseModel):
     """Request model for creating a story."""
 
     name: str = Field(..., min_length=1, max_length=100)
-    description: Optional[str] = Field(None, max_length=500)
+    description: str | None = Field(None, max_length=500)
 
 
 class StoryResponse(BaseModel):
@@ -610,7 +628,7 @@ class StoryResponse(BaseModel):
 
     id: str
     name: str
-    description: Optional[str]
+    description: str | None
     created_at: datetime
     updated_at: datetime
     item_count: int = 0
@@ -625,7 +643,7 @@ class StoryItemDetail(BaseModel):
     id: str
     story_id: str
     generation_id: str
-    version_id: Optional[str] = None
+    version_id: str | None = None
     start_time_ms: int
     track: int = 0
     trim_start_ms: int = 0
@@ -638,15 +656,14 @@ class StoryItemDetail(BaseModel):
     language: str
     audio_path: str
     duration: float
-    seed: Optional[int]
-    instruct: Optional[str]
-    engine: Optional[str] = None
+    seed: int | None
+    instruct: str | None
+    engine: str | None = None
     volume: float = 1.0
     generation_created_at: datetime
     # Versions available for this generation
-    versions: Optional[list["GenerationVersionResponse"]] = None
-    active_version_id: Optional[str] = None
-
+    versions: list["GenerationVersionResponse"] | None = None
+    active_version_id: str | None = None
     class Config:
         from_attributes = True
 
@@ -656,7 +673,7 @@ class StoryDetailResponse(BaseModel):
 
     id: str
     name: str
-    description: Optional[str]
+    description: str | None
     created_at: datetime
     updated_at: datetime
     items: list[StoryItemDetail] = []
@@ -669,8 +686,8 @@ class StoryItemCreate(BaseModel):
     """Request model for adding a generation to a story."""
 
     generation_id: str
-    start_time_ms: Optional[int] = None  # If not provided, will be calculated automatically
-    track: Optional[int] = 0  # Track number (0 = main track)
+    start_time_ms: int | None = None  # If not provided, will be calculated automatically
+    track: int | None = 0  # Track number (0 = main track)
 
 
 class StoryItemUpdateTime(BaseModel):
@@ -715,7 +732,7 @@ class StoryItemSplit(BaseModel):
 class StoryItemVersionUpdate(BaseModel):
     """Request model for setting a story item's pinned version."""
 
-    version_id: Optional[str] = None  # null = use generation default
+    version_id: str | None = None  # null = use generation default
 
 
 class StoryItemVolumeUpdate(BaseModel):
@@ -747,24 +764,23 @@ class EffectPresetCreate(BaseModel):
     """Request model for creating an effect preset."""
 
     name: str = Field(..., min_length=1, max_length=100)
-    description: Optional[str] = Field(None, max_length=500)
-    effects_chain: list[EffectConfig]
+    description: str | None = Field(None, max_length=500)
+effects_chain: list[EffectConfig]
 
 
 class EffectPresetUpdate(BaseModel):
     """Request model for updating an effect preset."""
 
-    name: Optional[str] = Field(None, min_length=1, max_length=100)
-    description: Optional[str] = None
-    effects_chain: Optional[list[EffectConfig]] = None
-
+    name: str | None = Field(None, min_length=1, max_length=100)
+    description: str | None = None
+    effects_chain: list[EffectConfig] | None = None
 
 class EffectPresetResponse(BaseModel):
     """Response model for effect preset."""
 
     id: str
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     effects_chain: list[EffectConfig]
     is_builtin: bool = False
     created_at: datetime
@@ -780,8 +796,8 @@ class GenerationVersionResponse(BaseModel):
     generation_id: str
     label: str
     audio_path: str
-    effects_chain: Optional[list[EffectConfig]] = None
-    source_version_id: Optional[str] = None
+    effects_chain: list[EffectConfig] | None = None
+    source_version_id: str | None = None
     is_default: bool
     created_at: datetime
 
@@ -793,18 +809,16 @@ class ApplyEffectsRequest(BaseModel):
     """Request to apply effects to an existing generation."""
 
     effects_chain: list[EffectConfig]
-    source_version_id: Optional[str] = Field(
-        None, description="Version to use as source audio (defaults to clean/original)"
+    source_version_id: str | None = Field(        None, description="Version to use as source audio (defaults to clean/original)"
     )
-    label: Optional[str] = Field(None, max_length=100, description="Label for this version (auto-generated if omitted)")
+    label: str | None = Field(None, max_length=100, description="Label for this version (auto-generated if omitted)")
     set_as_default: bool = Field(default=True, description="Set this version as the default")
 
 
 class ProfileEffectsUpdate(BaseModel):
     """Request to update the default effects chain on a profile."""
 
-    effects_chain: Optional[list[EffectConfig]] = Field(None, description="Effects chain (null to remove)")
-
+    effects_chain: list[EffectConfig] | None = Field(None, description="Effects chain (null to remove)")
 
 class AvailableEffectParam(BaseModel):
     """Description of a single effect parameter."""
@@ -845,4 +859,4 @@ class AppSettingsUpdate(BaseModel):
     the unset fields before merging.
     """
 
-    use_48k_speech_tokenizer: Optional[bool] = None
+    use_48k_speech_tokenizer: bool | None = None
