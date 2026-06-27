@@ -16,3 +16,6 @@ app/src/lib/api
 
 # Tailwind CSS files (contains @tailwind directives)
 **/index.css
+
+# Team worktrees (contain nested biome.json from git worktrees)
+.worktrees

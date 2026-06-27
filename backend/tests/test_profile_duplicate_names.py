@@ -6,8 +6,6 @@ duplicate profile names and provides user-friendly error messages.
 """
 
 import shutil
-
-# Add parent directory to path to import backend modules
 import sys
 import tempfile
 from pathlib import Path
@@ -16,12 +14,12 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# Ensure project root is importable as a package
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from profiles import create_profile, update_profile
-
-from database import Base
-from models import VoiceProfileCreate
+from backend.services.profiles import create_profile, update_profile
+from backend.database import Base
+from backend.models import VoiceProfileCreate
 
 
 @pytest.fixture
