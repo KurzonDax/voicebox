@@ -10,7 +10,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { apiClient } from '@/lib/api/client';
 import type { VoiceProfileResponse } from '@/lib/api/types';
 import { getLanguageOptionsForEngine } from '@/lib/constants/languages';
@@ -160,41 +159,26 @@ export function EngineModelSelector({ form, compact, selectedProfile }: EngineMo
     staleTime: 1000 * 60 * 5,
   });
 
-  // Build a set of engine names that are platform-incompatible.
-  const incompatibleEngines = new Set<string>();
-  const engineRequires: Record<string, string[]> = {};
-  if (modelStatus?.models) {
-    for (const m of modelStatus.models) {
-      if (!m.platform_compatible && m.requires && m.requires.length > 0) {
-        incompatibleEngines.add(m.model_name.split('-')[0]); // coarse key
-        // Map by engine derived from model_name patterns
-        // We'll match by checking the option engine field below
-      }
-    }
-    // More precise: map from engine name to requires via model entries
-    for (const m of modelStatus.models) {
-      if (m.requires && m.requires.length > 0 && !m.platform_compatible) {
-        // Derive engine name from model — use the requires list keyed by display
-        // We rely on the fact that incompatible means requires is non-empty
-        // Store by hf_repo_id to later map to engine
-      }
-    }
-  }
-
-  // Build engine -> {compatible, requires} from model status
+  // Build engine -> {compatible, requires} from the model-status payload.
+  // For each model entry, find the matching ENGINE_OPTIONS entry by
+  // derived model_name (or a startsWith fallback) and record the most
+  // restrictive observed compatibility — a single incompatible variant
+  // is enough to mark the engine as locked.
   const engineCompatibility: Record<string, { compatible: boolean; requires: string[] }> = {};
   if (modelStatus?.models) {
     for (const m of modelStatus.models) {
-      // Derive the engine name from model_name by checking ENGINE_OPTIONS
       for (const opt of ENGINE_OPTIONS) {
         const optModelName = deriveModelName(opt);
-        if (m.model_name === optModelName || m.model_name.startsWith(opt.engine.replace('_', '-'))) {
-          if (!engineCompatibility[opt.engine] || !m.platform_compatible) {
-            engineCompatibility[opt.engine] = {
-              compatible: m.platform_compatible,
-              requires: m.requires ?? [],
-            };
-          }
+        if (m.model_name !== optModelName && !m.model_name.startsWith(opt.engine.replace('_', '-'))) {
+          continue;
+        }
+        const prev = engineCompatibility[opt.engine];
+        const incompatible = !m.platform_compatible && (m.requires ?? []).length > 0;
+        if (!prev || incompatible) {
+          engineCompatibility[opt.engine] = {
+            compatible: !incompatible,
+            requires: m.requires ?? [],
+          };
         }
       }
     }
@@ -228,26 +212,18 @@ export function EngineModelSelector({ form, compact, selectedProfile }: EngineMo
 
           if (isIncompatible) {
             return (
-              <Tooltip key={opt.value}>
-                <TooltipTrigger asChild>
-                  <div>
-                    <SelectItem
-                      key={opt.value}
-                      value={opt.value}
-                      className={`${itemClass ?? ''} opacity-50 cursor-not-allowed`}
-                      disabled
-                    >
-                      <span className="flex items-center gap-1.5">
-                        <Lock className="h-3 w-3 shrink-0" />
-                        {opt.label}
-                      </span>
-                    </SelectItem>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="right">
-                  Requires {requiresLabel} hardware
-                </TooltipContent>
-              </Tooltip>
+              <SelectItem
+                key={opt.value}
+                value={opt.value}
+                className={`${itemClass ?? ''} opacity-50 cursor-not-allowed`}
+                disabled
+                title={`Requires ${requiresLabel} hardware`}
+              >
+                <span className="flex items-center gap-1.5">
+                  <Lock className="h-3 w-3 shrink-0" />
+                  {opt.label}
+                </span>
+              </SelectItem>
             );
           }
 
