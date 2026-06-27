@@ -61,7 +61,7 @@ import { AudioSampleUpload } from './AudioSampleUpload';
 import { SampleList } from './SampleList';
 
 const MAX_AUDIO_DURATION_SECONDS = 30;
-const PRESET_ONLY_ENGINES = new Set(['kokoro', 'qwen_custom_voice']);
+const PRESET_ONLY_ENGINES = new Set(['kokoro', 'qwen_custom_voice', 'minimax']);
 const DEFAULT_ENGINE_OPTIONS = [
   { value: 'qwen', label: 'Qwen3-TTS' },
   { value: 'qwen_custom_voice', label: 'Qwen CustomVoice' },
@@ -70,6 +70,7 @@ const DEFAULT_ENGINE_OPTIONS = [
   { value: 'chatterbox_turbo', label: 'Chatterbox Turbo' },
   { value: 'tada', label: 'TADA' },
   { value: 'kokoro', label: 'Kokoro 82M' },
+  { value: 'minimax', label: 'MiniMax Cloud TTS' },
 ] as const;
 
 function makeProfileSchema(t: (key: string) => string) {
@@ -898,6 +899,7 @@ export function ProfileForm() {
                               <SelectContent>
                                 <SelectItem value="kokoro">Kokoro 82M</SelectItem>
                                 <SelectItem value="qwen_custom_voice">Qwen CustomVoice</SelectItem>
+                                <SelectItem value="minimax">MiniMax Cloud TTS</SelectItem>
                               </SelectContent>
                             </Select>
                           </FormItem>
