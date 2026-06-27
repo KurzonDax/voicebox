@@ -206,6 +206,21 @@ def test_write_creates_parent_dir(tmp_path, monkeypatch):
     assert (deep_dir / "custom_models.json").exists()
 
 
+def test_write_failure_cleans_up_tmp_file(tmp_custom_models_file, monkeypatch):
+    """If os.replace fails, the temp file is removed and the error is re-raised."""
+    def fake_replace(src, dst):
+        raise OSError("simulated rename failure")
+
+    monkeypatch.setattr(custom_models.os, "replace", fake_replace)
+
+    with pytest.raises(OSError, match="simulated rename failure"):
+        custom_models.add_custom_model("org/model")
+
+    # No leftover .tmp files in the data dir (the except branch ran os.unlink)
+    leftover = list(tmp_custom_models_file.glob("custom_models_*.tmp"))
+    assert leftover == []
+
+
 # ── Thread safety ────────────────────────────────────────────────────
 
 
