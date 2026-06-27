@@ -274,3 +274,261 @@ def test_patched_source_execs_without_typeerror_on_unsupported_type():
                 sys.modules.pop(key, None)
             else:
                 sys.modules[key] = val
+
+
+# ---------------------------------------------------------------------------
+# _TorchDocsPatchingLoader
+# ---------------------------------------------------------------------------
+
+
+class _SpecReturningInnerLoader(_FakeInnerLoader):
+    """Inner loader whose create_module returns a real ModuleSpec so the
+    loader's own create_module delegation can be exercised."""
+
+    def __init__(self, source: str):
+        super().__init__(source)
+        self.create_module_called_with = None
+        # .path is an attribute (matches PyInstaller FrozenLoader semantics),
+        # not a callable — the loader reads it via getattr(self._inner, "path").
+        self.path = "<inner-path>"
+
+    def create_module(self, spec):  # type: ignore[override]
+        self.create_module_called_with = spec
+        from importlib.machinery import ModuleSpec
+
+        return ModuleSpec(spec.name, self)
+
+
+def _make_module_with_spec(name: str, submodule_search_locations=None):
+    """Build a fresh ModuleType with a real ModuleSpec attached."""
+    from importlib.machinery import ModuleSpec
+
+    module = types.ModuleType(name)
+    module.__spec__ = ModuleSpec(name, loader=None)
+    if submodule_search_locations is not None:
+        module.__spec__.submodule_search_locations = submodule_search_locations
+    return module
+
+
+def test_loader_delegates_getattr_to_inner():
+    """Unknown attribute access on the loader forwards to the inner loader."""
+    sentinel_attr = "the_sentinel_attribute"
+    inner = _SpecReturningInnerLoader(SIMPLE_SOURCE)
+    inner.the_sentinel_attribute = "present"  # type: ignore[attr-defined]
+    wrapper = _TorchDocsPatchingLoader(inner)
+    assert wrapper.the_sentinel_attribute == "present"  # type: ignore[attr-defined]
+    # Also confirm getattr on an arbitrary attribute we just set on inner
+    inner.some_other_thing = 42  # type: ignore[attr-defined]
+    assert wrapper.some_other_thing == 42  # type: ignore[attr-defined]
+    # Use the sentinel so the assertion references the dynamic name
+    assert getattr(wrapper, sentinel_attr) == "present"
+
+
+def test_loader_create_module_delegates_to_inner():
+    """create_module must delegate to the inner loader and return its result."""
+    inner = _SpecReturningInnerLoader(SIMPLE_SOURCE)
+    wrapper = _TorchDocsPatchingLoader(inner)
+    from importlib.machinery import ModuleSpec
+
+    spec = ModuleSpec("torch._torch_docs", loader=None)
+    result = wrapper.create_module(spec)
+    assert isinstance(result, ModuleSpec)
+    assert result.name == "torch._torch_docs"
+    assert inner.create_module_called_with is spec
+
+
+def test_loader_exec_module_falls_back_when_no_source():
+    """When get_source returns empty/None, exec_module delegates to inner."""
+    inner = _FakeInnerLoader("")
+    inner.exec_called = False
+    wrapper = _TorchDocsPatchingLoader(inner)
+    module = _make_module_with_spec("torch._torch_docs")
+    wrapper.exec_module(module)
+    assert inner.exec_called is True
+
+
+def test_loader_exec_module_handles_get_source_exception():
+    """When get_source raises, exec_module falls back to inner.exec_module."""
+
+    class _BoomLoader(_FakeInnerLoader):
+        def get_source(self, name):
+            raise OSError("simulated get_source failure")
+
+    inner = _BoomLoader(SIMPLE_SOURCE)
+    inner.exec_called = False
+    wrapper = _TorchDocsPatchingLoader(inner)
+    module = _make_module_with_spec("torch._torch_docs")
+    wrapper.exec_module(module)
+    assert inner.exec_called is True
+
+
+def test_loader_exec_module_runs_patched_source():
+    """When source is available, exec_module compiles and execs patched source."""
+    inner = _SpecReturningInnerLoader(SIMPLE_SOURCE)
+    inner.exec_called = False  # should remain False — we exec ourselves, not the inner
+    wrapper = _TorchDocsPatchingLoader(inner)
+    module = _make_module_with_spec("torch._torch_docs", submodule_search_locations=["/some/pkg/path"])
+    wrapper.exec_module(module)
+    # The patched module sets add_docstr (our wrapper) and calls it on _obj1.
+    assert callable(module.add_docstr)
+    # Inner.exec_module should NOT have been called — we did the exec ourselves.
+    assert inner.exec_called is False
+    # submodule_search_locations must be installed on the module's __path__
+    assert module.__path__ == ["/some/pkg/path"]
+
+
+def test_loader_exec_module_uses_module_name_when_inner_has_no_path():
+    """If inner loader has no .path attribute, exec_module falls back to module name."""
+    inner = _FakeInnerLoader(SIMPLE_SOURCE)
+    # Explicitly delete .path so getattr(..., 'path') raises AttributeError
+    if hasattr(inner, "path"):
+        delattr(inner, "path")
+    wrapper = _TorchDocsPatchingLoader(inner)
+    module = _make_module_with_spec("torch._torch_docs")
+    # Should not raise — fallback filename = module.__name__
+    wrapper.exec_module(module)
+    assert callable(module.add_docstr)
+
+
+# ---------------------------------------------------------------------------
+# Finder branches: skip finders without find_spec; skip finders returning None
+# ---------------------------------------------------------------------------
+
+
+class _NoFindSpecFinder:
+    """A finder object that doesn't have a find_spec attribute."""
+
+    def __repr__(self):  # for the diagnostic log message
+        return "<NoFindSpecFinder>"
+
+
+class _NoLoaderInnerFinder(_FakeInnerFinder):
+    """Inner finder whose spec has loader=None — should be skipped."""
+
+    def __init__(self):
+        super().__init__(loader=None)
+
+
+class _ReturnsNoneInnerFinder:
+    """Inner finder that returns None from find_spec — should be skipped."""
+
+    def find_spec(self, fullname, path=None, target=None):
+        return None
+
+    def __repr__(self):
+        return "<ReturnsNoneInnerFinder>"
+
+
+def test_finder_skips_finders_without_find_spec():
+    """Finders lacking find_spec must be skipped, not crash."""
+    good_loader = _FakeInnerLoader(SIMPLE_SOURCE)
+    good_finder = _FakeInnerFinder(good_loader)
+    no_find_spec = _NoFindSpecFinder()
+
+    finder = _TorchDocsPatchingFinder()
+    import sys
+
+    original = sys.meta_path[:]
+    sys.meta_path.insert(0, finder)
+    sys.meta_path.insert(1, no_find_spec)
+    sys.meta_path.insert(2, good_finder)
+    try:
+        spec = finder.find_spec(_TARGET_MODULE)
+    finally:
+        sys.meta_path[:] = original
+    assert spec is not None
+    assert isinstance(spec.loader, _TorchDocsPatchingLoader)
+
+
+def test_finder_skips_finders_returning_spec_with_no_loader():
+    """If inner finder returns a spec whose loader is None, skip and try next."""
+    good_loader = _FakeInnerLoader(SIMPLE_SOURCE)
+    good_finder = _FakeInnerFinder(good_loader)
+    no_loader_finder = _NoLoaderInnerFinder()
+
+    finder = _TorchDocsPatchingFinder()
+    import sys
+
+    original = sys.meta_path[:]
+    sys.meta_path.insert(0, finder)
+    sys.meta_path.insert(1, no_loader_finder)
+    sys.meta_path.insert(2, good_finder)
+    try:
+        spec = finder.find_spec(_TARGET_MODULE)
+    finally:
+        sys.meta_path[:] = original
+    assert spec is not None
+    assert isinstance(spec.loader, _TorchDocsPatchingLoader)
+
+
+def test_finder_skips_finders_returning_none_spec():
+    """If inner finder returns None for the spec, skip and try next."""
+    good_loader = _FakeInnerLoader(SIMPLE_SOURCE)
+    good_finder = _FakeInnerFinder(good_loader)
+    none_finder = _ReturnsNoneInnerFinder()
+
+    finder = _TorchDocsPatchingFinder()
+    import sys
+
+    original = sys.meta_path[:]
+    sys.meta_path.insert(0, finder)
+    sys.meta_path.insert(1, none_finder)
+    sys.meta_path.insert(2, good_finder)
+    try:
+        spec = finder.find_spec(_TARGET_MODULE)
+    finally:
+        sys.meta_path[:] = original
+    assert spec is not None
+    assert isinstance(spec.loader, _TorchDocsPatchingLoader)
+
+
+# ---------------------------------------------------------------------------
+# _diag robustness — silently swallows file-write failures
+# ---------------------------------------------------------------------------
+
+
+def test_diag_swallows_file_write_errors(tmp_path, monkeypatch):
+    """_diag must never raise even if the log path is unwritable."""
+    from backend import pyi_rth_torch_docs_patch as _mod
+
+    # Point _DIAG_PATH at a directory so open(... 'a') raises IsADirectoryError
+    monkeypatch.setattr(_mod, "_DIAG_PATH", str(tmp_path))  # tmp_path is a dir
+    # Must not raise
+    _mod._diag("this should be silently dropped")
+
+
+def test_finder_installation_failure_is_logged_and_swallowed(monkeypatch):
+    """If sys.meta_path.insert raises during hook install, the except branch
+    must log the failure rather than crash the import.
+
+    Reproduces the defensive try/except around the install line by replacing
+    sys.meta_path with an object whose .insert() raises — exec'ing the module
+    body against the broken meta_path must not crash.
+    """
+
+    class _BoomMetaPathList(list):
+        def insert(self, index, obj):
+            raise RuntimeError("simulated meta_path.insert failure")
+
+    import sys
+
+    saved = sys.meta_path
+    sys.meta_path = _BoomMetaPathList()
+    try:
+        # Re-exec the hook module body directly (it isn't installed as a
+        # package, so importlib.reload can't find its spec). The module is
+        # already loaded by the test session, so its global names are in
+        # sys.modules; this re-runs the bottom-of-file try/except install
+        # block against the broken meta_path.
+        from pathlib import Path
+
+        hook_path = Path(__file__).resolve().parent.parent / "pyi_rth_torch_docs_patch.py"
+        with open(hook_path, encoding="utf-8") as f:
+            source = f.read()
+        # Must NOT raise — the except branch swallows the RuntimeError.
+        exec(compile(source, str(hook_path), "exec"), sys.modules["backend.pyi_rth_torch_docs_patch"].__dict__)
+    finally:
+        sys.meta_path = saved
+
+    # If we got here, the except branch successfully swallowed the error.
+    assert True
