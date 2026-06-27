@@ -41,6 +41,7 @@ RUN pip install --no-cache-dir --prefix=/install --no-deps \
     git+https://github.com/OpenMOSS/MOSS-TTS-Nano.git
 RUN pip install --no-cache-dir --prefix=/install \
     git+https://github.com/QwenLM/Qwen3-TTS.git
+RUN pip install --no-cache-dir --prefix=/install "fastmcp>=0.4.0"
 
 
 # === Stage 3: Runtime ===
@@ -70,9 +71,20 @@ COPY --from=frontend --chown=voicebox:voicebox /build/web/dist /app/frontend/
 # Create data directories owned by non-root user
 RUN mkdir -p /app/data/generations /app/data/profiles /app/data/cache \
     && chown -R voicebox:voicebox /app/data
+RUN mkdir -p /home/voicebox/.cache/numba /home/voicebox/.cache/joblib /home/voicebox/.cache/huggingface \
+    && chown -R voicebox:voicebox /home/voicebox/.cache
+RUN mkdir -p /scripts && chown -R voicebox:voicebox /scripts
+COPY --chown=voicebox:voicebox docker-entrypoint.sh /scripts/docker-entrypoint.sh
+RUN chmod +x /scripts/docker-entrypoint.sh
+
+ENV NUMBA_CACHE_DIR=/home/voicebox/.cache/numba
+ENV JOBLIB_CACHE_DIR=/home/voicebox/.cache/joblib
+ENV HF_HOME=/home/voicebox/.cache/huggingface
 
 # Switch to non-root user
 USER voicebox
+
+ENTRYPOINT ["/scripts/docker-entrypoint.sh"]
 
 # Expose the API port
 EXPOSE 17493
