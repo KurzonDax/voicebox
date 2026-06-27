@@ -179,3 +179,59 @@ class TestBoundary:
         with patch("backend.utils.platform_detect.subprocess.run", return_value=_fake_completed("Agent 0: gfx1099\n")):
             configure_rocm_gpu()
         assert os.environ.get("HSA_OVERRIDE_GFX_VERSION") == "10.3.0"
+
+
+# ─── Defensive guards (synthetic failures) ──────────────────────────────
+
+
+class TestDefensiveGuards:
+    """Cover the inner try/except and ``if not gfx_nums: return`` guards.
+
+    These branches cannot be reached through real rocminfo output (the outer
+    regex ``gfx\\d+`` guarantees the inner ``\\d+`` always matches), so the
+    tests below inject synthetic failures via ``unittest.mock.patch`` to
+    exercise the defensive paths. The guards themselves came from upstream
+    PR #785 verbatim — preserving them keeps the cherry-pick faithful.
+    """
+
+    def test_inner_regex_raises_attributeerror_no_crash(self, clean_env):
+        """``re.search`` raising AttributeError inside the parsing block
+        is caught by the inner ``except (ValueError, AttributeError)`` and
+        logged — no override, no crash."""
+        rocminfo_output = "Agent 0: gfx1030\n"
+        original_search = __import__("re").search
+
+        def fake_search(pattern, string, *args, **kwargs):
+            # The outer regex call passes — return a match so gfx_versions
+            # gets populated. The inner call (r"\\d+", v) raises AttributeError.
+            if pattern.startswith(r"(gfx"):
+                return original_search(pattern, string, *args, **kwargs)
+            raise AttributeError("synthetic inner-search failure")
+
+        with patch("backend.utils.platform_detect.subprocess.run", return_value=_fake_completed(rocminfo_output)), \
+             patch("backend.utils.platform_detect.re.search", side_effect=fake_search):
+            configure_rocm_gpu()
+        assert "HSA_OVERRIDE_GFX_VERSION" not in os.environ
+
+    def test_gfx_nums_empty_inner_guard(self, clean_env):
+        """All gfx matches yield strings without digits (synthetic) →
+        ``gfx_nums`` ends up empty → function returns without setting override."""
+        # Use a non-standard pattern where the outer regex picks up "gfx"
+        # but the inner "\\d+" extraction is forced to return None by mocking.
+        rocminfo_output = "Agent 0: gfx1030\n"
+
+        def fake_inner_search(pattern, string, *args, **kwargs):
+            # pattern is r"\\d+"; return None for every call → no nums.
+            return None
+
+        original_search = __import__("re").search
+
+        def selective_search(pattern, string, *args, **kwargs):
+            if pattern.startswith(r"(gfx"):
+                return original_search(pattern, string, *args, **kwargs)
+            return fake_inner_search(pattern, string, *args, **kwargs)
+
+        with patch("backend.utils.platform_detect.subprocess.run", return_value=_fake_completed(rocminfo_output)), \
+             patch("backend.utils.platform_detect.re.search", side_effect=selective_search):
+            configure_rocm_gpu()
+        assert "HSA_OVERRIDE_GFX_VERSION" not in os.environ
