@@ -98,7 +98,7 @@ async def test_update_profile_to_duplicate_name_raises_error(test_db, mock_profi
     """Test that updating a profile to a duplicate name raises a ValueError."""
     # Create two profiles with different names
     profile_data_1 = VoiceProfileCreate(name="Profile A", description="First profile", language="en")
-    profile_1 = await create_profile(profile_data_1, test_db)
+    await create_profile(profile_data_1, test_db)
 
     profile_data_2 = VoiceProfileCreate(name="Profile B", description="Second profile", language="en")
     profile_2 = await create_profile(profile_data_2, test_db)

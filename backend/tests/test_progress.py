@@ -128,7 +128,7 @@ def test_hf_progress_tracker():
             print("  Simulating download with tqdm...")
             total_size = 2_000_000
             with tqdm(total=total_size, desc="model.bin", unit="B", unit_scale=True) as pbar:
-                for chunk in range(0, total_size, 200_000):
+                for _chunk in range(0, total_size, 200_000):
                     pbar.update(200_000)
                     time.sleep(0.01)
 
@@ -137,7 +137,7 @@ def test_hf_progress_tracker():
 
             # Verify progress increases
             last_downloaded = 0
-            for downloaded, total, filename in captured_progress:
+            for downloaded, total, _filename in captured_progress:
                 assert downloaded >= last_downloaded, "Downloaded bytes should increase"
                 assert total == total_size, "Total should be consistent"
                 last_downloaded = downloaded
