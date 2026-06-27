@@ -58,6 +58,7 @@ class MLXTTSBackend:
         self.model = None
         self.model_size = model_size
         self._current_model_size = None
+        self._supports_ref_audio = False
 
     def is_loaded(self) -> bool:
         """Check if model is loaded."""
@@ -129,6 +130,19 @@ class MLXTTSBackend:
 
             self.model = load(model_path)
 
+        import inspect
+
+        self._supports_ref_audio = "ref_audio" in inspect.signature(self.model.generate).parameters
+
+        # Warm up Metal JIT kernels — first inference compiles shaders, shift cost to load time
+        try:
+            logger.info("Warming up Metal kernels...")
+            for _ in self.model.generate("Hello.", lang_code="english"):
+                break  # one token is enough to trigger compilation
+            logger.info("Metal warmup complete")
+        except Exception as e:
+            logger.warning("Warmup failed (non-fatal): %s", e)
+
         self._current_model_size = model_size
         self.model_size = model_size
         logger.info("MLX TTS model %s loaded successfully", model_size)
@@ -174,9 +188,8 @@ class MLXTTSBackend:
                     cached_audio_path = cached_prompt.get("ref_audio") or cached_prompt.get("ref_audio_path")
                     if cached_audio_path and Path(cached_audio_path).exists():
                         return cached_prompt, True
-                    else:
-                        # Cached file no longer exists, invalidate cache
-                        logger.warning("Cached audio file not found: %s, regenerating prompt", cached_audio_path)
+                    # Cached file no longer exists, invalidate cache
+                    logger.warning("Cached audio file not found: %s, regenerating prompt", cached_audio_path)
 
         # MLX voice prompt format - store audio path and text
         # The model will process this during generation
@@ -252,11 +265,8 @@ class MLXTTSBackend:
             # legitimate metadata calls during generation.
             try:
                 if ref_audio:
-                    # Check if generate accepts ref_audio parameter
-                    import inspect
-
-                    sig = inspect.signature(self.model.generate)
-                    if "ref_audio" in sig.parameters:
+                    # Use cached capability flag set at model load time
+                    if self._supports_ref_audio:
                         # Generate with voice cloning
                         for result in self.model.generate(text, ref_audio=ref_audio, ref_text=ref_text, lang_code=lang):
                             audio_chunks.append(np.array(result.audio))
@@ -385,12 +395,11 @@ class MLXSTTBackend:
             # Extract text from result
             if isinstance(result, str):
                 return result.strip()
-            elif isinstance(result, dict):
+            if isinstance(result, dict):
                 return result.get("text", "").strip()
-            elif hasattr(result, "text"):
+            if hasattr(result, "text"):
                 return result.text.strip()
-            else:
-                return str(result).strip()
+            return str(result).strip()
 
         # Run blocking transcription in thread pool
         return await _run_on_mlx_thread(_transcribe_sync)
