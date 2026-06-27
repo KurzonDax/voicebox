@@ -266,28 +266,30 @@ def _get_qwen_model_configs() -> list[ModelConfig]:
 
     # 4-bit quantized variants — MLX only, ~2-3x faster on Apple Silicon
     if backend_type == "mlx":
-        configs.extend([
-            ModelConfig(
-                model_name="qwen-tts-1.7B-4bit",
-                display_name="Qwen TTS 1.7B ⚡ Fast (4-bit)",
-                engine="qwen",
-                hf_repo_id=repo_1_7b_4bit,
-                model_size="1.7B-4bit",
-                size_mb=1100,
-                supports_instruct=False,
-                languages=_languages,
-            ),
-            ModelConfig(
-                model_name="qwen-tts-0.6B-4bit",
-                display_name="Qwen TTS 0.6B ⚡ Fast (4-bit)",
-                engine="qwen",
-                hf_repo_id=repo_0_6b_4bit,
-                model_size="0.6B-4bit",
-                size_mb=400,
-                supports_instruct=False,
-                languages=_languages,
-            ),
-        ])
+        configs.extend(
+            [
+                ModelConfig(
+                    model_name="qwen-tts-1.7B-4bit",
+                    display_name="Qwen TTS 1.7B ⚡ Fast (4-bit)",
+                    engine="qwen",
+                    hf_repo_id=repo_1_7b_4bit,
+                    model_size="1.7B-4bit",
+                    size_mb=1100,
+                    supports_instruct=False,
+                    languages=_languages,
+                ),
+                ModelConfig(
+                    model_name="qwen-tts-0.6B-4bit",
+                    display_name="Qwen TTS 0.6B ⚡ Fast (4-bit)",
+                    engine="qwen",
+                    hf_repo_id=repo_0_6b_4bit,
+                    model_size="0.6B-4bit",
+                    size_mb=400,
+                    supports_instruct=False,
+                    languages=_languages,
+                ),
+            ]
+        )
 
     return configs
 
