@@ -6,6 +6,7 @@ import {
   redirect,
 } from '@tanstack/react-router';
 import { AppFrame } from '@/components/AppFrame/AppFrame';
+import { AudiobookTab } from '@/components/AudiobookTab/AudiobookTab';
 import { CapturesTab } from '@/components/CapturesTab/CapturesTab';
 import { EffectsTab } from '@/components/EffectsTab/EffectsTab';
 import { MainEditor } from '@/components/MainEditor/MainEditor';
@@ -106,6 +107,13 @@ const storiesRoute = createRoute({
   component: StoriesTab,
 });
 
+// Audiobook route
+const audiobookRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/audiobook',
+  component: AudiobookTab,
+});
+
 // Voices route
 const voicesRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -203,6 +211,7 @@ const serverRedirectRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   indexRoute,
   storiesRoute,
+  audiobookRoute,
   capturesRoute,
   voicesRoute,
   effectsRoute,
