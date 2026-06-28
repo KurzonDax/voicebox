@@ -15,21 +15,26 @@ Docker support makes Voicebox easier to deploy, especially for:
 
 ## Quick Start
 
-### Using Pre-Built Images (Recommended)
+### Building Your Own Image (Required)
+
+This fork does not publish prebuilt Docker images. Clone the repo and build locally:
 
 ```bash
-# CPU-only version
-docker run -p 8000:8000 -v voicebox-data:/app/data \
-  ghcr.io/jamiepine/voicebox:latest
+git clone https://github.com/KurzonDax/voicebox.git
+cd voicebox
 
-# NVIDIA GPU version
-docker run --gpus all -p 8000:8000 -v voicebox-data:/app/data \
-  ghcr.io/jamiepine/voicebox:latest-cuda
+# Build the image
+docker build -t voicebox .
 
-# AMD GPU version (experimental)
+# CPU-only
+docker run -p 8000:8000 -v voicebox-data:/app/data voicebox
+
+# NVIDIA GPU (requires NVIDIA Container Toolkit)
+docker run --gpus all -p 8000:8000 -v voicebox-data:/app/data voicebox
+
+# AMD GPU (experimental)
 docker run --device=/dev/kfd --device=/dev/dri -p 8000:8000 \
-  -v voicebox-data:/app/data \
-  ghcr.io/jamiepine/voicebox:latest-rocm
+  -v voicebox-data:/app/data voicebox
 ```
 
 Then open: `http://localhost:8000`
@@ -43,7 +48,7 @@ version: '3.8'
 
 services:
   voicebox:
-    image: ghcr.io/jamiepine/voicebox:latest-cuda
+    build: .
     ports:
       - "8000:8000"
     volumes:
@@ -325,7 +330,7 @@ version: '3.8'
 
 services:
   voicebox:
-    image: ghcr.io/jamiepine/voicebox:latest-cuda
+    build: .
     container_name: voicebox
     restart: unless-stopped
     ports:
@@ -403,7 +408,7 @@ version: '3.8'
 services:
   # Main Voicebox app
   voicebox:
-    image: ghcr.io/jamiepine/voicebox:latest-cuda
+    build: .
     restart: unless-stopped
     volumes:
       - voicebox-data:/app/data
@@ -465,10 +470,16 @@ volumes:
    ```
 3. **Deploy:**
    ```bash
+   # Clone and build first
+   git clone https://github.com/KurzonDax/voicebox.git
+   cd voicebox
+   docker build -t voicebox .
+
+   # Deploy
    docker run --gpus all -d -p 80:8000 \
      -v voicebox-data:/app/data \
      --restart unless-stopped \
-     ghcr.io/jamiepine/voicebox:latest-cuda
+     voicebox
    ```
 
 ### DigitalOcean
@@ -513,7 +524,7 @@ Create `fly.toml`:
 app = "voicebox"
 
 [build]
-  image = "ghcr.io/jamiepine/voicebox:latest"
+  dockerfile = "Dockerfile"
 
 [[services]]
   http_checks = []
@@ -748,7 +759,7 @@ Help improve Docker support:
 1. Test on different platforms (AMD GPU, ARM64, etc.)
 2. Submit Dockerfile optimizations
 3. Share deployment configurations
-4. Report issues: [GitHub Issues](https://github.com/jamiepine/voicebox/issues)
+4. Report issues: [GitHub Issues](https://github.com/KurzonDax/voicebox/issues)
 
 ## Resources
 

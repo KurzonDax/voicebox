@@ -10,7 +10,7 @@ Voicebox can run as a Docker container with a full web UI -- no desktop app requ
 ## Quick Start
 
 ```bash
-git clone https://github.com/jamiepine/voicebox.git
+git clone https://github.com/KurzonDax/voicebox.git
 cd voicebox
 docker compose up
 ```
@@ -220,18 +220,21 @@ ports:
   - "127.0.0.1:8080:17493"
 ```
 
-## Prebuilt Images (Coming Soon)
+## Building Your Own Image
 
-We plan to publish prebuilt Docker images to GitHub Container Registry so you won't need to build locally:
+This fork does not publish prebuilt Docker images. Use the Dockerfile included in the repository to build locally:
 
 ```bash
-# Not available yet — coming in a future release
-docker run -p 17493:17493 ghcr.io/jamiepine/voicebox:latest
+# Build the image from source
+docker build -t voicebox .
+
+# Run it
+docker run -p 17493:17493 -v voicebox-data:/app/data voicebox
 ```
 
-The CPU image will be ~3-4 GB (Python + PyTorch + TTS packages). A separate CUDA tag (~6-8 GB) will be available for NVIDIA GPU users. This is normal for ML containers.
+Or simply use `docker compose up` as described above — it builds the image from the repo's Dockerfile automatically.
 
-For now, use `docker compose up` to build from source as described above.
+The CPU image is ~3-4 GB (Python + PyTorch + TTS packages). For NVIDIA GPU support, add the GPU device configuration shown in the GPU Acceleration section above.
 
 ## Connecting the Desktop App
 

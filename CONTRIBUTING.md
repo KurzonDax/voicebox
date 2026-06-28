@@ -24,7 +24,7 @@ The `Makefile` at the repo root is the single entry point. It detects your OS an
 #### macOS
 
 ```bash
-git clone https://github.com/jamiepine/voicebox.git
+git clone https://github.com/KurzonDax/voicebox.git
 cd voicebox
 
 make install             # installs Homebrew packages, Python venv, and JS deps
