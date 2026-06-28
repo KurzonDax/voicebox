@@ -11,20 +11,22 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/jamiepine/voicebox/releases">
-    <img src="https://img.shields.io/github/downloads/jamiepine/voicebox/total?style=flat&color=blue" alt="Downloads" />
+  <strong>⚠️ This is a fork of <a href="https://github.com/jamiepine/voicebox">jamiepine/voicebox</a>.</strong><br/>
+  Maintained independently — please file issues, feature requests, and bug reports against this fork. Credit for the original project goes to Jamie Pine and the upstream contributors.
+</p>
+
+<p align="center">
+  <a href="https://github.com/KurzonDax/voicebox/releases">
+    <img src="https://img.shields.io/github/downloads/KurzonDax/voicebox/total?style=flat&color=blue" alt="Downloads" />
   </a>
-  <a href="https://github.com/jamiepine/voicebox/releases/latest">
-    <img src="https://img.shields.io/github/v/release/jamiepine/voicebox?style=flat" alt="Release" />
+  <a href="https://github.com/KurzonDax/voicebox/releases/latest">
+    <img src="https://img.shields.io/github/v/release/KurzonDax/voicebox?style=flat" alt="Release" />
   </a>
-  <a href="https://github.com/jamiepine/voicebox/stargazers">
-    <img src="https://img.shields.io/github/stars/jamiepine/voicebox?style=flat" alt="Stars" />
+  <a href="https://github.com/KurzonDax/voicebox/stargazers">
+    <img src="https://img.shields.io/github/stars/KurzonDax/voicebox?style=flat" alt="Stars" />
   </a>
-  <a href="https://github.com/jamiepine/voicebox/blob/main/LICENSE">
-    <img src="https://img.shields.io/github/license/jamiepine/voicebox?style=flat" alt="License" />
-  </a>
-  <a href="https://deepwiki.com/jamiepine/voicebox">
-    <img src="https://img.shields.io/static/v1?label=Ask&message=DeepWiki&color=5B6EF7" alt="Ask DeepWiki" />
+  <a href="https://github.com/KurzonDax/voicebox/blob/main/LICENSE">
+    <img src="https://img.shields.io/github/license/KurzonDax/voicebox?style=flat" alt="License" />
   </a>
 </p>
 
@@ -33,8 +35,6 @@
 </p>
 
 <p align="center">
-  <a href="https://voicebox.sh">voicebox.sh</a> •
-  <a href="https://docs.voicebox.sh">Docs</a> •
   <a href="#download">Download</a> •
   <a href="#features">Features</a> •
   <a href="#api">API</a> •
@@ -44,13 +44,7 @@
 <br/>
 
 <p align="center">
-  <a href="https://voicebox.sh">
-    <img src="landing/public/assets/app-screenshot-1.webp" alt="Voicebox App Screenshot" width="800" />
-  </a>
-</p>
-
-<p align="center">
-  <em>Click the image above to watch the demo video on <a href="https://voicebox.sh">voicebox.sh</a></em>
+  <img src="landing/public/assets/app-screenshot-1.webp" alt="Voicebox App Screenshot" width="800" />
 </p>
 
 <br/>
@@ -90,16 +84,13 @@ The two cloud incumbents sit on opposite halves of the voice I/O loop — Eleven
 
 ## Download
 
-| Platform              | Download                                               |
-| --------------------- | ------------------------------------------------------ |
-| macOS (Apple Silicon) | [Download DMG](https://voicebox.sh/download/mac-arm)   |
-| macOS (Intel)         | [Download DMG](https://voicebox.sh/download/mac-intel) |
-| Windows               | [Download MSI](https://voicebox.sh/download/windows)   |
-| Docker                | `docker compose up`                                    |
+Pre-built binaries are published on the upstream project. See [jamiepine/voicebox releases](https://github.com/jamiepine/voicebox/releases/latest) for the official macOS and Windows builds.
 
-> **[View all binaries →](https://github.com/jamiepine/voicebox/releases/latest)**
+| Platform | Download |
+| -------- | -------- |
+| Docker   | `docker compose up` |
 
-> **Linux** — Pre-built binaries are not yet available. See [voicebox.sh/linux-install](https://voicebox.sh/linux-install) for build-from-source instructions.
+> **Building from source** — Linux is not packaged upstream. See the [Development](#development) section below to build the desktop app and server locally from this checkout.
 
 > **Having trouble?** See the [Troubleshooting Guide](docs/content/docs/overview/troubleshooting.mdx) for common install, generation, model-download, and GPU issues.
 
@@ -431,7 +422,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed setup and contribution guide
 ### Quick Start
 
 ```bash
-git clone https://github.com/jamiepine/voicebox.git
+git clone https://github.com/KurzonDax/voicebox.git
 cd voicebox
 
 just setup   # creates Python venv, installs all deps
@@ -493,5 +484,5 @@ MIT License — see [LICENSE](LICENSE) for details.
 ---
 
 <p align="center">
-  <a href="https://voicebox.sh">voicebox.sh</a>
+  <a href="https://github.com/jamiepine/voicebox">Upstream: jamiepine/voicebox</a>
 </p>
