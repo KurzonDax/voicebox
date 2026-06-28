@@ -11,8 +11,8 @@
 </p>
 
 <p align="center">
-  <strong>⚠️ This is a fork of <a href="https://github.com/jamiepine/voicebox">jamiepine/voicebox</a>.</strong><br/>
-  Maintained independently — please file issues, feature requests, and bug reports against this fork. Credit for the original project goes to Jamie Pine and the upstream contributors.
+  <strong>⚠️ This is a fork of <a href="https://github.com/jamiepine/voicebox">jamiepine/voicebox</a>, maintained at <a href="https://github.com/KurzonDax/voicebox">KurzonDax/voicebox</a>.</strong><br/>
+  Please file issues, feature requests, and bug reports against this fork. Credit for the original project goes to Jamie Pine and the upstream contributors.
 </p>
 
 <p align="center">
@@ -84,13 +84,13 @@ The two cloud incumbents sit on opposite halves of the voice I/O loop — Eleven
 
 ## Download
 
-Pre-built binaries are published on the upstream project. See [jamiepine/voicebox releases](https://github.com/jamiepine/voicebox/releases/latest) for the official macOS and Windows builds.
+Pre-built binaries are published on GitHub Releases. See [KurzonDax/voicebox releases](https://github.com/KurzonDax/voicebox/releases/latest) for the latest macOS and Windows builds.
 
 | Platform | Download |
 | -------- | -------- |
 | Docker   | `docker compose up` |
 
-> **Building from source** — Linux is not packaged upstream. See the [Development](#development) section below to build the desktop app and server locally from this checkout.
+> **Building from source** — Linux is not packaged. See the [Development](#development) section below to build the desktop app and server locally from this checkout.
 
 > **Having trouble?** See the [Troubleshooting Guide](docs/content/docs/overview/troubleshooting.mdx) for common install, generation, model-download, and GPU issues.
 
