@@ -273,9 +273,13 @@ build-server-cuda: _ensure-venv
 build-local: build-server build-server-cuda build-tauri
 
 # Build Tauri desktop app
+# CI=true tells the Tauri bundler to pass --skip-jenkins to bundle_dmg.sh,
+# which skips the AppleScript Finder-prettifying step that fails in headless
+# and remote-GUI (NoMachine) environments. The DMG is still created — only
+# cosmetic icon positioning is skipped. On CI runners CI is already set.
 [unix]
 build-tauri:
-    cd {{ tauri_dir }} && bun run tauri build
+    cd {{ tauri_dir }} && CI=true bun run tauri build
 
 [windows]
 build-tauri:

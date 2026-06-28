@@ -138,11 +138,11 @@ dev-web: ## Run the web app (no Tauri/Rust build needed)
 .PHONY: build
 build: ## Build production Tauri app (server binary + installer)
 	./scripts/build-server.sh
-	cd $(TAURI_DIR) && bun run tauri build
+	cd $(TAURI_DIR) && CI=true bun run tauri build
 
 .PHONY: build-frontend
 build-frontend: ## Build Tauri app only (skips server binary)
-	cd $(TAURI_DIR) && bun run tauri build
+	cd $(TAURI_DIR) && CI=true bun run tauri build
 
 .PHONY: build-web
 build-web: ## Build web app
