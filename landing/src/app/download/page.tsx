@@ -274,7 +274,7 @@ export default function DownloadPage() {
               </p>
             </a>
             <a
-              href="https://deepwiki.com/jamiepine/voicebox"
+              href="https://deepwiki.com/KurzonDax/voicebox"
               target="_blank"
               rel="noopener noreferrer"
               className="rounded-xl border border-border bg-card/60 backdrop-blur-sm p-5 hover:border-accent/30 hover:bg-card transition-all group"

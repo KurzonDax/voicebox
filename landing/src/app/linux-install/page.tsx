@@ -94,7 +94,7 @@ export default function LinuxInstall() {
               <div className="space-y-3">
                 <div className="rounded-lg border border-border bg-card/60 p-4 font-mono text-sm">
                   <div className="text-muted-foreground select-none"># Clone the repo</div>
-                  <div>git clone https://github.com/jamiepine/voicebox.git</div>
+                  <div>git clone https://github.com/KurzonDax/voicebox.git</div>
                   <div>cd voicebox</div>
                 </div>
 

@@ -1169,6 +1169,7 @@
       "tagline": "開源語音合成工作室。複製聲音、生成語音、套用效果、打造語音驅動的應用程式——全部在您的本機執行。",
       "createdBy": "作者",
       "buyCoffee": "請我喝杯咖啡",
+      "donateNote": "支持原始 voicebox 團隊",
       "license": "採用 <link>MIT</link> 授權"
     }
   },
