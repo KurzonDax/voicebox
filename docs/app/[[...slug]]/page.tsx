@@ -14,14 +14,14 @@ export default async function Page(props: PageProps<'/[[...slug]]'>) {
 
   const MDX = page.data.body;
   const markdownUrl = `${page.url}.mdx`;
-  const githubUrl = `https://github.com/jamiepine/voicebox/blob/main/docs/content/docs/${page.path}`;
+  const githubUrl = `https://github.com/KurzonDax/voicebox/blob/main/docs/content/docs/${page.path}`;
 
   return (
     <DocsPage
       toc={page.data.toc}
       full={page.data.full}
       editOnGithub={{
-        owner: 'jamiepine',
+        owner: 'KurzonDax',
         repo: 'voicebox',
         sha: 'main',
         path: `docs/content/docs/${page.path}`,
