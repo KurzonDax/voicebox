@@ -355,6 +355,29 @@ cd ../..
 bun run tauri build
 ```
 
+### DMG Bundling Fails on Headless/Remote macOS
+
+**Symptoms:**
+- `just build-tauri` builds the .app fine but fails at DMG creation
+- Error: `error running bundle_dmg.sh`
+- The `bundle_dmg.sh` AppleScript step fails when no GUI session is available (NoMachine remote, SSH, CI)
+
+**Root Cause:**
+Tauri's `bundle_dmg.sh` runs an AppleScript to position icons in the DMG window. This requires a GUI session. Without one (headless server, NoMachine remote, SSH), the AppleScript fails and the build aborts.
+
+**Solution:**
+The `build-tauri` recipe in the justfile and Makefile already sets `CI=true`, which tells the Tauri bundler to pass `--skip-jenkins` to `bundle_dmg.sh`. This skips the AppleScript step — the DMG is still created, only cosmetic icon positioning is omitted.
+
+```bash
+# The fix is already applied — just run:
+just build-tauri
+# or:
+make build-frontend
+
+# If running tauri build directly:
+CI=true bun run tauri build
+```
+
 ### OpenAPI Client Generation Fails
 
 **Symptoms:**
