@@ -56,7 +56,8 @@ unidic-lite>=1.0.8
 # Installed --no-deps in setup scripts because it pins torch==2.7.0
 # Sub-dependencies listed explicitly (not pulled transitively via --no-deps):
 sentencepiece>=0.1.99
-WeTextProcessing>=1.0.4.1
+# WeTextProcessing installed --no-deps in setup scripts because it pulls in
+# pynini, which cannot build on Windows (GCC flags passed to MSVC cl.exe).
 
 # Audio processing
 librosa>=0.10.0
