@@ -69,6 +69,9 @@ setup-python:
     {{ pip }} install --no-deps hume-tada
     # MOSS-TTS-Nano pins torch==2.7.0 which conflicts with our torch>=2.2
     {{ pip }} install --no-deps git+https://github.com/OpenMOSS/MOSS-TTS-Nano.git
+    # WeTextProcessing pulls in pynini which cannot build on Windows (GCC flags
+    # passed to MSVC cl.exe). Install --no-deps to avoid the pynini dependency.
+    {{ pip }} install --no-deps WeTextProcessing
     # Platform-specific backend deps
     if [ "$(uname -m)" = "arm64" ] && [ "$(uname)" = "Darwin" ]; then
         echo "Detected Apple Silicon — installing MLX dependencies..."
@@ -126,6 +129,9 @@ setup-python:
     & "{{ pip }}" install --no-deps hume-tada
     # MOSS-TTS-Nano pins torch==2.7.0 which conflicts with our torch>=2.2
     & "{{ pip }}" install --no-deps git+https://github.com/OpenMOSS/MOSS-TTS-Nano.git
+    # WeTextProcessing pulls in pynini which cannot build on Windows (GCC flags
+    # passed to MSVC cl.exe). Install --no-deps to avoid the pynini dependency.
+    & "{{ pip }}" install --no-deps WeTextProcessing
     # --no-deps prevents Qwen3-TTS from overriding the pinned torch version
     & "{{ pip }}" install --no-deps git+https://github.com/QwenLM/Qwen3-TTS.git
     & "{{ pip }}" install pyinstaller ruff pytest pytest-asyncio -q
