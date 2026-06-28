@@ -68,3 +68,8 @@ temp/
 backend/tests/results/
 backend/tests/fixtures/reference_voice.wav
 backend/tests/fixtures/reference_voice.txt
+
+.venv-remote-proxy/
+scripts/remote_proxy/__pycache__/
+*.pyc
+remote_proxy.json

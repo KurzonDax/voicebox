@@ -156,31 +156,28 @@ export function ConnectionForm() {
 
         {platform.metadata.isTauri && (
           <div className="mt-6 pt-6 border-t">
-            <div className="flex items-start space-x-3">
-              <Checkbox
-                id="allowNetworkAccess"
-                className="mt-[6px]"
-                checked={mode === 'remote'}
-                onCheckedChange={(checked: boolean) => {
-                  setMode(checked ? 'remote' : 'local');
-                  toast({
-                    title: 'Setting updated',
-                    description: checked
-                      ? 'Network access enabled. Restart the app to apply.'
-                      : 'Network access disabled. Restart the app to apply.',
-                  });
-                }}
-              />
-              <div className="space-y-1">
-                <label
-                  htmlFor="allowNetworkAccess"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                >
-                  Allow network access
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Server mode
                 </label>
+                <select
+                  value={mode}
+                  onChange={(event) => {
+                    const newMode = event.target.value as 'local' | 'remote';
+                    setMode(newMode);
+                    toast({
+                      title: 'Server mode updated',
+                      description: `Server mode changed to ${newMode}. Restart the app to apply.`,
+                    });
+                  }}
+                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="local">Local bundled server</option>
+                  <option value="remote">Remote / proxy server</option>
+                </select>
                 <p className="text-sm text-muted-foreground">
-                  Makes the server accessible from other devices on your network. Restart the app
-                  after changing this setting.
+                  In remote mode, Voicebox will connect to the Server URL and will not start the bundled sidecar. Restart the app after changing this setting.
                 </p>
               </div>
             </div>
