@@ -860,3 +860,17 @@ class AppSettingsUpdate(BaseModel):
     """
 
     use_48k_speech_tokenizer: bool | None = None
+
+
+class ComposeRequest(BaseModel):
+    """Body for POST /profiles/{id}/compose.
+
+    The language code is constrained to the same set the profile-creation
+    endpoint accepts (``VoiceProfileCreate.language``) so the dropdown
+    the user picks from can never send a code the server will reject.
+    """
+
+    language: str = Field(
+        default="en",
+        pattern="^(zh|en|ja|ko|de|fr|ru|pt|es|it|he|ar|da|el|fi|hi|ms|nl|no|pl|sv|sw|tr|hu|fa|cs)$",
+    )

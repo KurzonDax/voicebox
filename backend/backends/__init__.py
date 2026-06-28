@@ -24,6 +24,11 @@ DEFAULT_LLM_TEMPERATURE = 0.7
 
 MOSS_TTS_NANO_HF_REPO = "OpenMOSS-Team/MOSS-TTS-Nano"
 
+# Display name for every language code the app accepts. Keep in sync with
+# ``ComposeRequest.pattern`` (in ``backend.models``) and with
+# ``VoiceProfileCreate.language`` / ``GenerationRequest.language`` — any code
+# those accept must appear here or ``personality.compose_as_profile`` will
+# write a system prompt containing ``"Output language: None"``.
 LANGUAGE_CODE_TO_NAME = {
     "zh": "chinese",
     "en": "english",
@@ -35,6 +40,22 @@ LANGUAGE_CODE_TO_NAME = {
     "pt": "portuguese",
     "es": "spanish",
     "it": "italian",
+    "he": "hebrew",
+    "ar": "arabic",
+    "da": "danish",
+    "el": "greek",
+    "fi": "finnish",
+    "hi": "hindi",
+    "ms": "malay",
+    "nl": "dutch",
+    "no": "norwegian",
+    "pl": "polish",
+    "sv": "swedish",
+    "sw": "swahili",
+    "tr": "turkish",
+    "hu": "hungarian",
+    "fa": "persian",
+    "cs": "czech",
 }
 
 WHISPER_HF_REPOS = {
