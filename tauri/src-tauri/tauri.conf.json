@@ -60,8 +60,8 @@
       "open": ".*"
     },
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEUxRENBQkRBQjdBNTM1OTIKUldTU05hVzMycXZjNGJGcUxmcVVocll2QjdSaTJNdlFxR2M3VDJsMnVvbDdyZGRPMmRlOW9aWTcK",
-      "endpoints": ["https://github.com/jamiepine/voicebox/releases/latest/download/latest.json"]
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IERBNEQwMDNFM0U3OTgzNDMKUldSRGczaytQZ0JOMnVyUnZjOHJleXhGT2laTmFMVjIyUnhGMmNBZWphZ2JZWGprVEVOa0tSRVkK",
+      "endpoints": ["https://github.com/KurzonDax/voicebox/releases/latest/download/latest.json"]
     }
   }
 }
