@@ -10,6 +10,42 @@ Voicebox is an open-source AI voice studio — a desktop app (Tauri/React) backe
 
 ---
 
+## Killjoys Workflow — Read Before Making Changes
+
+This repo uses a PR-gated workflow. **All code changes must go through GitHub Pull Requests.** No exceptions.
+
+### Rules
+
+1. **Never merge directly to main.** Do not run `git merge`, `git push origin main`, or any command that writes to main. This applies to all agents — kanban workers, desktop instances, ad-hoc sessions.
+
+2. **Work in a branch.** Create a feature branch (e.g. `fix/pynini-windows-build`), commit your changes there.
+
+3. **Push and open a PR.** Push your branch to GitHub and open a Pull Request against `main`:
+   ```bash
+   git push -u origin <branch_name>
+   gh pr create --title "<description>" --base main
+   ```
+
+4. **A reviewer (Zeph) reviews and merges the PR.** Zeph reviews the PR diff, runs tests, and either approves + merges via GitHub or requests changes. **Workers never merge their own PRs.** Only Zeph merges after approval.
+
+5. **If you're a kanban worker** (Johnny, Davin): after opening the PR, block your kanban task with `review-required: PR #<number> ready for review` and include `pr_url` and `pr_number` in your kanban metadata. The orchestrator (Lucy) will create a review task for Zeph.
+
+6. **If you're not a kanban worker** (desktop instance, ad-hoc session): after opening the PR, you're done. Do not merge the PR — a reviewer will handle it.
+
+### Quick Reference
+
+| Action | Allowed? |
+|--------|----------|
+| Commit to a feature branch | Yes |
+| Push branch to GitHub | Yes |
+| Open a Pull Request | Yes |
+| `git merge` to main | **No** |
+| `git push origin main` | **No** |
+| Merge your own PR | **No** |
+| Merge someone else's PR | **No** (only Zeph merges, after her review) |
+
+---
+
 ## Repository structure
 
 ```text
