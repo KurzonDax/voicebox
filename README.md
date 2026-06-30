@@ -1,3 +1,12 @@
+<h2 align="center">
+  <strong>⚠️ This is a <u>fork</u> of the original <a href="https://github.com/jamiepine/voicebox">jamiepine/voicebox</a>.<br/><br/>
+</h2>
+<p>All credit goes to the original developer and contributors.  This fork was created to tailor voicebox to my specific needs and is not intended to be used as a drop-in replacement for the original. 
+
+Donation links in the desktop app are intentionally pointed to the original author.  Please consider supporting them for their amazing work. </strong>
+</p>
+
+<h1 align="center"></h1><br/>
 <p align="center">
   <img src=".github/assets/icon-dark.webp" alt="Voicebox" width="120" height="120" />
 </p>
@@ -10,10 +19,7 @@
   The full voice I/O stack, running locally on your machine.
 </p>
 
-<p align="center">
-  <strong>⚠️ This is a fork of <a href="https://github.com/jamiepine/voicebox">jamiepine/voicebox</a>, maintained at <a href="https://github.com/KurzonDax/voicebox">KurzonDax/voicebox</a>.</strong><br/>
-  Please file issues, feature requests, and bug reports against this fork. Credit for the original project goes to Jamie Pine and the upstream contributors.
-</p>
+
 
 <p align="center">
   <a href="https://github.com/KurzonDax/voicebox/releases">
@@ -30,9 +36,7 @@
   </a>
 </p>
 
-<p align="center">
-    <a href="https://trendshift.io/repositories/21213" target="_blank"><img src="https://trendshift.io/api/badge/repositories/21213" alt="jamiepine%2Fvoicebox | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
-</p>
+
 
 <p align="center">
   <a href="#download">Download</a> •
